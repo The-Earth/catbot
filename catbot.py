@@ -317,6 +317,7 @@ class ChatMember(User):
             self.can_invite_users: bool = member_json['can_invite_users']
             self.can_pin_messages: bool = member_json['can_pin_messages']
         if self.status == 'restricted':
+            self.until_date: int = member_json['until_date']
             self.is_member: bool = member_json['is_member']
             self.can_send_messages: bool = member_json['can_send_messages']
             self.can_send_media_messages: bool = member_json['can_send_media_messages']
@@ -448,7 +449,7 @@ class Message:
                                                self.html_formatted_text[offset + length:]
                 elif item['type'] == 'code':
                     self.html_formatted_text = self.text[:offset] + \
-                                               f'<code>{self.text[offset:offset + length]}</code>' +\
+                                               f'<code>{self.text[offset:offset + length]}</code>' + \
                                                self.html_formatted_text[offset + length:]
                 elif item['type'] == 'text_link':
                     self.html_formatted_text = self.text[:offset] + f"<a href=\"{item['url']}\">" \
@@ -591,4 +592,8 @@ class UserNotFoundError(APIError):
 
 
 class ChatNotFoundError(APIError):
+    pass
+
+
+class InsufficientRightError(APIError):
     pass
