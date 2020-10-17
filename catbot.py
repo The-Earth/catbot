@@ -208,6 +208,90 @@ class Bot(User):
         else:
             return chat_member
 
+    def restrict_chat_member(self, chat_id: int, user_id: int, until: int = 5, **permissions) -> bool:
+        """
+        :param chat_id: Unique identifier for the target chat or username of the target supergroup
+        :param user_id: Unique identifier of the target user
+        :param until: Optional. Time when restrictions will be lifted for the user, unix time.
+                      If user is restricted for more than 366 days or less than 30 seconds from the current time,
+                      they are considered to be restricted forever.
+                      Default: Forever
+        :param permissions: Chat permissions defined in Telegram bot api. Left blank to restrict all actions except
+                            reading.
+                            See https://core.telegram.org/bots/api#chatpermissions
+            - can_send_messages: Optional. True, if the user is allowed to send text messages, contacts, locations and
+                                 venues
+            - can_send_media_messages: Optional. True, if the user is allowed to send audios, documents, photos, videos,
+                                       video notes and voice notes, implies can_send_messages
+            - can_send_polls: Optional. True, if the user is allowed to send polls, implies can_send_messages
+            - can_send_other_messages: Optional. True, if the user is allowed to send animations, games, stickers and
+                                       use inline bots, implies can_send_media_messages
+            - can_add_web_page_previews: Optional. True, if the user is allowed to add web page previews to their
+                                         messages, implies can_send_media_messages
+            - can_change_info: Optional. True, if the user is allowed to change the chat title, photo and other
+                               settings. Ignored in public supergroups
+            - can_invite_users: Optional. True, if the user is allowed to invite new users to the chat
+            - can_pin_messages: Optional. True, if the user is allowed to pin messages. Ignored in public supergroups
+        :return: Return True on success, otherwise raise exception.
+        """
+        try:
+            result = self.api('restrictChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until,
+                                                     'permissions': permissions})
+        except APIError as e:
+            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
+                raise InsufficientRightError
+            elif 'Bad Request: user not found' in e.args[0]:
+                raise UserNotFoundError
+        else:
+            return result
+
+    def silence_chat_member(self, chat_id: int, user_id: int, until: int = 5) -> bool:
+        """
+        Remove can_send_messages permission from specified user.
+        :param chat_id: Unique identifier for the target chat or username of the target supergroup
+        :param user_id: Unique identifier of the target user
+        :param until: Optional. Time when restrictions will be lifted for the user, unix time.
+                      If user is restricted for more than 366 days or less than 30 seconds from the current time,
+                      they are considered to be restricted forever.
+                      Default: Forever
+        :return: Return True on success, otherwise raise exception.
+        """
+        try:
+            result = self.api('restrictChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until,
+                                                     'permissions': {'can_send_messages': False}})
+        except APIError as e:
+            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
+                raise InsufficientRightError
+            elif 'Bad Request: user not found' in e.args[0]:
+                raise UserNotFoundError
+        else:
+            return result
+
+    def lift_restrictions(self, chat_id: int, user_id: int) -> bool:
+        """
+        Lift all restrictions on specified user.
+        :param chat_id: Unique identifier for the target chat or username of the target supergroup
+        :param user_id: Unique identifier of the target user
+        :return: Return True on success, otherwise raise exception.
+        """
+        try:
+            result = self.api('restrictChatMember', {'chat_id': chat_id, 'user_id': user_id,
+                                                     'permissions': {'can_send_messages': True,
+                                                                     'can_send_media_messages': True,
+                                                                     'can_send_polls': True,
+                                                                     'can_send_other_messages': True,
+                                                                     'can_add_web_page_previews': True,
+                                                                     'can_change_info': True,
+                                                                     'can_invite_users': True,
+                                                                     'can_pin_messages': True}})
+        except APIError as e:
+            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
+                raise InsufficientRightError
+            elif 'Bad Request: user not found' in e.args[0]:
+                raise UserNotFoundError
+        else:
+            return result
+
 
 class ChatMember(User):
     def __init__(self, member_json: dict, chat_id: int):
