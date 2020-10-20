@@ -242,6 +242,11 @@ class Bot(User):
                 raise InsufficientRightError
             elif 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
+            elif 'Bad Request: user is an administrator' in e.args[0] or \
+                    'Bad Request: can\'t remove chat owner' in e.args[0]:
+                raise RestrictAdminError
+            else:
+                raise
         else:
             return result
 
@@ -264,6 +269,11 @@ class Bot(User):
                 raise InsufficientRightError
             elif 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
+            elif 'Bad Request: user is an administrator' in e.args[0] or \
+                    'Bad Request: can\'t remove chat owner' in e.args[0]:
+                raise RestrictAdminError
+            else:
+                raise
         else:
             return result
 
@@ -289,6 +299,11 @@ class Bot(User):
                 raise InsufficientRightError
             elif 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
+            elif 'Bad Request: user is an administrator' in e.args[0] or \
+                    'Bad Request: can\'t remove chat owner' in e.args[0]:
+                raise RestrictAdminError
+            else:
+                raise
         else:
             return result
 
@@ -596,4 +611,8 @@ class ChatNotFoundError(APIError):
 
 
 class InsufficientRightError(APIError):
+    pass
+
+
+class RestrictAdminError(APIError):
     pass
