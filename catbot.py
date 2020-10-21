@@ -361,7 +361,7 @@ class Message:
             # forwarded from users who disallowed a link to their account in forwarded message
             self.forward_sender_name: str = msg_json['forward_sender_name']
             self.forward = True
-        elif 'forward_from_chat' in msg_json.keys():
+        elif 'forward_from_message_id' in msg_json.keys():
             # forwarded from channels
             self.forward_from_chat = Chat(msg_json['forward_from_chat'])
             self.forward_from_message_id: int = msg_json['forward_from_message_id']
@@ -369,6 +369,10 @@ class Message:
                 self.forward_signature: str = msg_json['forward_signature']
             else:
                 self.forward_signature = ''
+            self.forward = True
+        elif 'forward_from_chat' in msg_json.keys():
+            # forwarded from anonymous admins
+            self.forward_from_chat = Chat(msg_json['forward_from_chat'])
             self.forward = True
         else:
             self.forward = False
