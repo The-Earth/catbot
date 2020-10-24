@@ -399,6 +399,11 @@ class Message:
         else:
             self.text: str = ''
 
+        if 'new_chat_members' in msg_json.keys():
+            self.new_chat_members: List[User] = []
+            for user_json in msg_json['new_chat_members']:
+                self.new_chat_members.append(User(user_json))
+
         self.mentions = []
         self.hashtags = []
         self.cashtags = []
