@@ -123,6 +123,8 @@ class Bot(User):
                 - disable_notification: Optional. Should be True or False. Sends the message silently. Users will
                                         receive a notification with no sound.
                 - reply_to_message_id: Optional. If the message is a reply, ID of the original message.
+                - allow_sending_without_reply: Optional. Pass True, if the message should be sent even if the specified
+                                               replied-to message is not found
             For plain text messages:
                 - text: Text of the message to be sent, 1-4096 characters after entities parsing.
                 - reply_markup: Additional interface options. A JSON-serialized object for an inline keyboard,
@@ -324,8 +326,9 @@ class ChatMember(User):
         self.chat_id: int = chat_id
         # Can be “creator”, “administrator”, “member”, “restricted”, “left” or “kicked”
         self.status: str = member_json['status']
-        if 'custom_title' in member_json.keys():
+        if self.status == 'administrator' or self.status == 'creator':
             self.custom_title: str = member_json['custom_title']
+            self.is_anonymous: str = member_json['is_anonymous']
         if self.status == 'administrator':
             self.can_be_edited: bool = member_json['can_be_edited']
             self.can_delete_messages: bool = member_json['can_delete_messages']
@@ -354,7 +357,12 @@ class Message:
         self.id: int = msg_json['message_id']
         if 'from' in msg_json.keys():
             self.from_ = User(msg_json['from'])
+        if 'sender_chat' in msg_json.keys():
+            self.sender_chat = Chat(msg_json['sender_chat'])
         self.date: int = msg_json['date']
+
+        if 'author_signature' in msg_json.keys():
+            self.author_signature: str = msg_json['author_signature']
 
         if 'forward_from' in msg_json.keys():
             # forwarded from users who allowed a link to their account in forwarded message
@@ -605,6 +613,14 @@ class Chat:
         else:
             self.username = ''
             self.link = ''
+
+        if 'bio' in chat_json.keys():
+            # Returned by get_chat
+            self.bio: str = chat_json['bio']
+            self.description: str = chat_json['description']
+            self.pinned_message = Message(chat_json['pinned_message'])
+            self.slow_mode_delay: int = chat_json['slow_mode_delay']
+            self.linked_chat_id: int = chat_json['linked_chat_id']
 
     def __str__(self):
         return self.raw

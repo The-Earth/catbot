@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='catbot',
-    version='0.3',
+    version='0.3.1-beta',
     packages=[''],
     url='https://github.com/The-Earth/catbot',
     license='MIT License',
