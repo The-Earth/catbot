@@ -243,7 +243,8 @@ class Bot(User):
             elif 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
             elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0]:
+                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
+                    'Bad Request: not enough rights' in e.args[0]:
                 raise RestrictAdminError
             else:
                 raise
@@ -270,7 +271,8 @@ class Bot(User):
             elif 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
             elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0]:
+                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
+                    'Bad Request: not enough rights' in e.args[0]:
                 raise RestrictAdminError
             else:
                 raise
@@ -300,7 +302,8 @@ class Bot(User):
             elif 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
             elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0]:
+                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
+                    'Bad Request: not enough rights' in e.args[0]:
                 raise RestrictAdminError
             else:
                 raise
