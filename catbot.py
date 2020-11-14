@@ -620,12 +620,20 @@ class Chat:
             self.username = ''
             self.link = ''
 
+        # Returned by get_chat
         if 'bio' in chat_json.keys():
-            # Returned by get_chat
+            # If the chat is private chat
             self.bio: str = chat_json['bio']
+        if 'description' in chat_json.keys():
+            # If the chat is group, supergroup or channel
             self.description: str = chat_json['description']
+        if 'pinned_message' in chat_json.keys():
             self.pinned_message = Message(chat_json['pinned_message'])
+        if 'slow_mode_delay' in chat_json.keys():
+            # If the chat is supergroup
             self.slow_mode_delay: int = chat_json['slow_mode_delay']
+        if 'linked_chat_id' in chat_json.keys():
+            # If the supergroup or channel has a linked channel or supergroup, respectively
             self.linked_chat_id: int = chat_json['linked_chat_id']
 
     def __str__(self):
