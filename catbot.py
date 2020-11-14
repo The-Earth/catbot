@@ -151,17 +151,17 @@ class Bot(User):
             else:
                 raise
 
-    def forward_message(self, from_chat_id, chat_id, msg_id, disable_notification=False):
+    def forward_message(self, from_chat_id, to_chat_id, msg_id: int, disable_notification=False):
         """
         :param from_chat_id: Unique identifier for the chat where the original message was sent
-        :param chat_id: Unique identifier for the target chat or username of the target channel
+        :param to_chat_id: Unique identifier for the target chat or username of the target channel
         :param msg_id: Message identifier in the chat specified in from_chat_id
         :param disable_notification: Optional. Sends the message silently. Users will receive a
                                      notification with no sound.
         :return: The forwarded message.
         """
         return Message(self.api('forwardMessage', {'from_chat_id': from_chat_id,
-                                                   'chat_id': chat_id,
+                                                   'chat_id': to_chat_id,
                                                    'message_id': msg_id,
                                                    'disable_notification': disable_notification}))
 
@@ -355,12 +355,18 @@ class Message:
         self.raw = msg_json
         self.chat = Chat(msg_json['chat'])
         self.id: int = msg_json['message_id']
+
+        # Empty for message in channels
         if 'from' in msg_json.keys():
             self.from_ = User(msg_json['from'])
+        
+        # The channel itself for channel messages. The supergroup itself for messages from anonymous group 
+        # administrators. The linked channel for messages automatically forwarded to the discussion group
         if 'sender_chat' in msg_json.keys():
             self.sender_chat = Chat(msg_json['sender_chat'])
         self.date: int = msg_json['date']
 
+        # Signature of the post author for messages in channels, or the custom title of an anonymous group administrator
         if 'author_signature' in msg_json.keys():
             self.author_signature: str = msg_json['author_signature']
 
