@@ -327,7 +327,6 @@ class ChatMember(User):
         # Can be “creator”, “administrator”, “member”, “restricted”, “left” or “kicked”
         self.status: str = member_json['status']
         if self.status == 'administrator' or self.status == 'creator':
-            self.custom_title: str = member_json['custom_title']
             self.is_anonymous: str = member_json['is_anonymous']
         if self.status == 'administrator':
             self.can_be_edited: bool = member_json['can_be_edited']
@@ -345,6 +344,9 @@ class ChatMember(User):
             self.can_send_polls: bool = member_json['can_send_polls']
             self.can_send_other_messages: bool = member_json['can_send_other_messages']  # sticker, gif and inline bot
             self.can_add_web_page_previews: bool = member_json['can_add_web_page_previews']  # "embed links" in client
+
+        if 'custom_title' in member_json.keys():
+            self.custom_title: str = member_json['custom_title']
 
     def __str__(self):
         return self.raw
