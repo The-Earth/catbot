@@ -312,6 +312,71 @@ class Bot(User):
         else:
             return result
 
+    def kick_chat_member(self, chat_id: int, user_id: int, until: int = 0, no_ban: bool = False) -> bool:
+        """
+        Kick chat member out. See https://core.telegram.org/bots/api#kickchatmember
+        :param chat_id: Unique identifier for the target chat or username of the target supergroup
+        :param user_id: Unique identifier of the target user
+        :param until: Optional, default 0 (infinite ban). Date when the user will be unbanned, unix time. If user is
+                      banned for more than 366 days or less than 30 seconds from the current time they are considered
+                      to be banned forever
+        :param no_ban: Kick out and then allow the user to join or send messages (from channel or somewhere else)
+        :return: Return True on success, otherwise raise exception.
+        """
+        try:
+            if no_ban:
+                # That the way Telegram API acts
+                result = self.api('unbanChatMember', {'chat_id': chat_id, 'user_id': user_id})
+            else:
+                result = self.api('kickChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until})
+        except APIError as e:
+            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
+                raise InsufficientRightError
+            elif 'Bad Request: user not found' in e.args[0]:
+                raise UserNotFoundError
+            elif 'Bad Request: user is an administrator' in e.args[0] or \
+                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
+                    'Bad Request: not enough rights' in e.args[0]:
+                raise RestrictAdminError
+            else:
+                raise
+        else:
+            return result
+
+    def unban_chat_member(self, chat_id: int, user_id: int) -> bool:
+        """
+        Unban a banned user. See https://core.telegram.org/bots/api#unbanchatmember
+        :param chat_id: Unique identifier for the target chat or username of the target supergroup
+        :param user_id: Unique identifier of the target user
+        """
+        try:
+            result = self.api('unbanChatMember', {'chat_id': chat_id, 'user_id': user_id, 'only_if_banned': True})
+        except APIError as e:
+            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
+                raise InsufficientRightError
+            elif 'Bad Request: user not found' in e.args[0]:
+                raise UserNotFoundError
+            elif 'Bad Request: user is an administrator' in e.args[0] or \
+                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
+                    'Bad Request: not enough rights' in e.args[0]:
+                raise RestrictAdminError
+            else:
+                raise
+        else:
+            return result
+
+    def delete_message(self, chat_id: int, msg_id: int) -> bool:
+        try:
+            result = self.api('deleteMessage', {'chat_id': chat_id, 'message_id': msg_id})
+        except APIError as e:
+            if 'Bad Request: message to delete not found' in e.args[0] or \
+                    'Bad Request: message can\'t be deleted' in e.args[0]:
+                raise DeleteMessageError
+            else:
+                raise
+        else:
+            return result
+
 
 class ChatMember(User):
     def __init__(self, member_json: dict, chat_id: int):
@@ -361,7 +426,7 @@ class Message:
         # Empty for message in channels
         if 'from' in msg_json.keys():
             self.from_ = User(msg_json['from'])
-        
+
         # The channel itself for channel messages. The supergroup itself for messages from anonymous group 
         # administrators. The linked channel for messages automatically forwarded to the discussion group
         if 'sender_chat' in msg_json.keys():
@@ -659,4 +724,8 @@ class InsufficientRightError(APIError):
 
 
 class RestrictAdminError(APIError):
+    pass
+
+
+class DeleteMessageError(APIError):
     pass
