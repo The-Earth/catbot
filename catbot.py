@@ -677,12 +677,9 @@ class Chat:
             else:
                 self.name = chat_json['first_name']
 
-        if 'username' in chat_json.keys() and self.type != 'private':
+        if 'username' in chat_json.keys():
             self.username: str = chat_json['username']
             self.link = 't.me/' + self.username
-        elif self.type != 'private' and str(self.id).startswith('-100'):
-            self.username = ''
-            self.link = f't.me/c/{str(self.id).replace("-100", "")}'
         else:
             self.username = ''
             self.link = ''
