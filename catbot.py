@@ -427,6 +427,11 @@ class Message:
         if 'from' in msg_json.keys():
             self.from_ = User(msg_json['from'])
 
+        if str(self.from_.id).startswith('-100'):
+            self.link = f't.me/c/{str(self.id).replace("-100", "")}/{self.id}'
+        else:
+            self.link = ''
+
         # The channel itself for channel messages. The supergroup itself for messages from anonymous group 
         # administrators. The linked channel for messages automatically forwarded to the discussion group
         if 'sender_chat' in msg_json.keys():
