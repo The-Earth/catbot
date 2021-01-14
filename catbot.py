@@ -427,8 +427,8 @@ class Message:
         if 'from' in msg_json.keys():
             self.from_ = User(msg_json['from'])
 
-        if str(self.from_.id).startswith('-100'):
-            self.link = f't.me/c/{str(self.id).replace("-100", "")}/{self.id}'
+        if str(self.chat.id).startswith('-100'):
+            self.link = f't.me/c/{str(self.chat.id).replace("-100", "")}/{self.id}'
         else:
             self.link = ''
 
