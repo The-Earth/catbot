@@ -493,6 +493,9 @@ class Message:
             for user_json in msg_json['new_chat_members']:
                 self.new_chat_members.append(User(user_json))
 
+        if 'left_chat_member' in msg_json.keys():
+            self.left_chat_member: User = User(msg_json['left_chat_member'])
+
         self.mentions = []
         self.hashtags = []
         self.cashtags = []
