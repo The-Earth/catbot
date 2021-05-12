@@ -94,9 +94,8 @@ class Bot(User):
 
             for item in updates:
                 update_offset = item['update_id'] + 1
-                if 'message' in item.keys() or 'edited_message' in item.keys():
-                    msg_type = 'message' if 'message' in item.keys() else 'edited_message'
-                    msg = Message(item[msg_type])
+                if 'message' in item.keys():
+                    msg = Message(item['message'])
                     for criteria, action, action_kw in self.msg_tasks:
                         if criteria(msg):
                             threading.Thread(target=action, args=(msg,), kwargs=action_kw).start()
