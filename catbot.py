@@ -44,6 +44,7 @@ class Bot(User):
 
         self.msg_tasks = []
         self.query_tasks = []
+        self.member_status_tasks = []
 
     def api(self, action: str, data: dict):
         resp = requests.post(self.base_url + action, json=data, **self.proxy_kw).json()
@@ -54,7 +55,23 @@ class Bot(User):
 
     def get_updates(self, offset: int = 0, timeout: int = 60) -> list:
         update_data = {'offset': offset,
-                       'timeout': timeout}
+                       'timeout': timeout,
+                       'allowed_updates': [
+                           # Accept all updates, but only part of them are available in catbot
+                           'message',   # Available
+                           'edited_message',
+                           'channel_post',
+                           'edited_channel_post',
+                           'inline_query',
+                           'chosen_inline_result',
+                           'callback_query',    # Available
+                           'shipping_query',
+                           'pre_checkout_query',
+                           'poll',
+                           'poll_answer',
+                           'my_chat_member',
+                           'chat_member'        # Available
+                       ]}
         updates = self.api('getUpdates', update_data)
         print(updates)
         return updates
@@ -83,6 +100,12 @@ class Bot(User):
         """
         self.query_tasks.append((criteria, action, action_kw))
 
+    def add_member_status_task(self, criteria, action, **action_kw):
+        """
+        Similar to add_msg_task, which add criteria and action for chat member updates.
+        """
+        self.member_status_tasks.append((criteria, action, action_kw))
+
     def start(self):
         update_offset = 0
         while True:
@@ -107,6 +130,12 @@ class Bot(User):
                     for criteria, action, action_kw in self.query_tasks:
                         if criteria(query):
                             threading.Thread(target=action, args=(query,), kwargs=action_kw).start()
+
+                elif 'chat_member' in item.keys():
+                    member_update = ChatMemberUpdate(item['chat_member'])
+                    for criteria, action, action_kw in self.member_status_tasks:
+                        if criteria(member_update):
+                            threading.Thread(target=action, args=(member_update,), kwargs=action_kw).start()
 
                 else:
                     continue
@@ -665,6 +694,19 @@ class CallbackQuery:
             self.inline_message_id: str = query_json['inline_message_id']
         else:
             self.inline_message_id = ''
+
+    def __str__(self):
+        return self.raw
+
+
+class ChatMemberUpdate:
+    def __init__(self, update_json: dict):
+        self.raw = update_json
+        self.chat = Chat(update_json['chat'])
+        self.from_ = User(update_json['from'])
+        self.date: int = update_json['date']
+        self.old_chat_member = ChatMember(update_json['old_chat_member'], self.chat.id)
+        self.new_chat_member = ChatMember(update_json['new_chat_member'], self.chat.id)
 
     def __str__(self):
         return self.raw
