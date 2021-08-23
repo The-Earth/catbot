@@ -163,6 +163,9 @@ class Bot(User):
         if 'reply_markup' in kw.keys():
             kw['reply_markup'] = kw['reply_markup'].parse()
 
+        if 'text' in kw.keys() and 'parse_mode' in kw.keys():
+            kw['text'] = kw['text'].replace('<', '&lt;')
+
         msg_kw = {'chat_id': chat_id, **kw}
         return Message(self.api('sendMessage', msg_kw))
 
