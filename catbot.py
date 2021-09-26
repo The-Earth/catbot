@@ -437,6 +437,8 @@ class ChatMember(User):
             self.can_send_polls: bool = member_json['can_send_polls']
             self.can_send_other_messages: bool = member_json['can_send_other_messages']  # sticker, gif and inline bot
             self.can_add_web_page_previews: bool = member_json['can_add_web_page_previews']  # "embed links" in client
+        if self.status == 'kicked':
+            self.until_date: int = member_json['until_date']
 
         if 'custom_title' in member_json.keys():
             self.custom_title: str = member_json['custom_title']
