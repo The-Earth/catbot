@@ -108,7 +108,7 @@ class Bot(User):
 
     def start(self):
         old_updates = self.get_updates()
-            update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
+        update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
         while True:
             try:
                 updates = self.get_updates(update_offset)
