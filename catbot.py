@@ -107,7 +107,8 @@ class Bot(User):
         self.member_status_tasks.append((criteria, action, action_kw))
 
     def start(self):
-        update_offset = 0
+        old_updates = self.get_updates()
+        update_offset = old_updates[-1]['update_id'] + 1
         while True:
             try:
                 updates = self.get_updates(update_offset)
