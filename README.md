@@ -1,36 +1,57 @@
 # catbot
 
-这里是一个协助使用 Python 开发 Telegram 机器人的轮子。设计思想是简化 API 请求，通过直观的传参和属性调用完成 API 调用和信息获取。此外还有获取 Telegram Update 的功能。目前只实现了部分 API，并会随着作者自己的需求变化逐步增加覆盖面，但并不以实现全部 API 为目标。
+catbot is a multithread library for [Telegram](https://t.me) bot development. It provides a Python interface for [Telegram bot API](https://core.telegram.org/bots/api) and manages [update steam](https://core.telegram.org/bots/api#getting-updates) for bot developers. 
 
-## 安装
+## Installation
 
-在 [Release](https://github.com/The-Earth/catbot/releases) 中下载 `catbot-x.tar.gz`，然后用 pip 安装：
+Find `catbot-x.tar.gz` in [release](https://github.com/The-Earth/catbot/releases), download the latest version and install it by 
 
-```
+```shell
 pip install catbot-x.tar.gz
 ```
 
-## 历史
+## Quick start
 
-catbot 最初是作者自己的[一个 Telegram 机器人](https://github.com/The-Earth/Cat-big-bot)的一部分代码，后来在其他地方也有用到。使用时请参考那个机器人的代码。
+By using catbot, a configuration json file is needed (or alternatively pass a dict to the initializer). Necessary configurations are bot token and proxy settings (see [example config](config_example.json)). If your bot does not use proxy to access Telegram server, simple set `proxy - enable` to `false`. Other configs could be helpful, such as a set of messages for auto-reply.
 
-## 使用方法简述
-
-尽管 API 的使用被简化了，但使用者仍然需要了解 [Telegram API](https://core.telegram.org/bots/api) 本身，确保知道自己在做什么。例如获取 Update 的部分，catbot 会将收到的新 Message 对象传给 client code，但需要 client code 自行处理里面的指令。
-
-关于获取 Update，catbot 要求 client code 提供一个条件函数和一个动作函数。这两个函数都接收 Message 或 Callback_query 对象作为参数。条件函数通过判断 Message 或 Callback_query 的内容、来源等信息来决定是否要作出反应，并返回 `True` 或 `False` 来告知 catbot。若决定要作出反应，catbot 会将这个 Message 或 Callback_query 交给动作函数来处理。
-
-开始时在 client code 处建立一个配置文件 config.json ，内容参照 [config_example.json](config_example.json)。然后用下面这段代码创建 Bot 对象：
+Let's say your config file is `config.json`, then create a bot instance:
 
 ```python
 import catbot
 import json
 
-
 config = json.load(open('config.json', 'r', encoding='utf-8'))
 bot = catbot.Bot(config)
 ```
 
-一组对应的条件和动作就是机器人的一个任务。假设已经写好了条件函数 `start_cri()` 和动作函数 `start()`，那么使用 `bot.add_msg_task(start_cri, start)`，机器人就会记录下这一组条件和动作。设置好所有的任务以后，使用 `bot.start()` 开始接收 Updates 并作出反应。
+Let's start with auto-replying the `/start` command in private chat with users, which is the very beginning of interactions with users.
 
-或者，您的任务只是单纯的推送消息，那么只要用前面的示例创建好 Bot 对象，然后在需要的地方使用 `bot.send_message(chat_id, text)` 即可。参数的填写可见代码内的注释及 Telegram API 文档。
+First, create a criteria function to tell catbot if there is a need to create a new thread to deal with the received message. Only simple and fast jobs should be put in this function in order not to block the main thread. Move time-consuming tasks (database querying, web requests) into action functions, which are running in separate threads.
+
+```python
+def start_cri(msg: catbot.Message) -> bool:
+    return msg.chat.type == 'private' and msg.text == '/start'
+```
+
+This function checks whether the message is from a private chat and its content is exactly `/start`. Then we need an action function.
+
+```python
+def start(msg: catbot.Message):
+    bot.send_message(chat_id=msg.chat.id, text='Hello')
+```
+
+This function send a `Hello` to the chat it received a `/start` from. Finally, add both two functions to task list. Notice that this task responds to [Message](https://core.telegram.org/bots/api#message) objects (also, `Message` class in catbot). So we use `add_msg_task` method here. (For other types of incoming events, catbot supports [CallbackQuery](https://core.telegram.org/bots/api#callbackquery) and [ChatMemberUpdated](https://core.telegram.org/bots/api#chatmemberupdated), with `add_query_task` and `add_member_status_task`.)
+
+```python
+bot.add_msg_task(start_cri, start)
+```
+
+And start the bot:
+
+```python
+bot.start()
+```
+
+## Go further
+
+Most methods of the `Bot` class (actions of a bot) have their inline documents. Generally, arguments of the methods are just the same or very similar to what [Telegram bot API](https://core.telegram.org/bots/api) says. If your desired method is not supported by catbot yet, catbot provides support for raw api call by `bot.api(action: str, data: dict)`.

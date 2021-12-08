@@ -144,21 +144,21 @@ class Bot(User):
     def send_message(self, chat_id, **kw):
         """
         :param chat_id: Unique identifier for the target chat or username of the target channel
-        :param kw: Keyword arguments defined in Telegram bot api. See https://core.telegram.org/bots/api#sendmessage
-            General keywords:
-                - parse_mode: Optional. Should be one of MarkdownV2 or HTML or Markdown.
+        :param kw: Keyword arguments defined in Telegram bot api. See https://core.telegram.org/bots/api#sendmessage<br>
+            General keywords:<br>
+                - parse_mode: Optional. Should be one of MarkdownV2 or HTML or Markdown.<br>
                 - disable_web_page_preview: Optional. Should be True or False. Disables link previews for links
-                                            in this message.
+                                            in this message.<br>
                 - disable_notification: Optional. Should be True or False. Sends the message silently. Users will
-                                        receive a notification with no sound.
-                - reply_to_message_id: Optional. If the message is a reply, ID of the original message.
+                                        receive a notification with no sound.<br>
+                - reply_to_message_id: Optional. If the message is a reply, ID of the original message.<br>
                 - allow_sending_without_reply: Optional. Pass True, if the message should be sent even if the specified
-                                               replied-to message is not found
-            For plain text messages:
-                - text: Text of the message to be sent, 1-4096 characters after entities parsing.
+                                               replied-to message is not found<br>
+            For plain text messages:<br>
+                - text: Text of the message to be sent, 1-4096 characters after entities parsing.<br>
                 - reply_markup: Additional interface options. A JSON-serialized object for an inline keyboard,
                                 custom reply keyboard, instructions to remove reply keyboard or to force a reply
-                                from the user. A common content of this param is an InlineKeyboard object.
+                                from the user. A common content of this param is an InlineKeyboard object.<br>
         :return:
         """
         if 'reply_markup' in kw.keys():
@@ -644,7 +644,7 @@ class InlineKeyboardButton:
 
     def parse(self) -> dict:
         """
-        :return: self.__dict__ for follow up usage like json serialization.
+        :return: self.__dict__ for follow-up usage like json serialization.
         """
         return self.__dict__
 
