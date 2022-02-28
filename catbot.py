@@ -112,7 +112,7 @@ class Bot(User):
         while True:
             try:
                 updates = self.get_updates(update_offset)
-            except APIError as e:
+            except (APIError, requests.ConnectionError) as e:
                 print(e.args[0])
                 continue
 
