@@ -416,7 +416,7 @@ class Bot(User):
 
     def detect_command(self, cmd: str, msg: "Message") -> bool:
         """
-        Detect two types of command (simple /cmd or /cmd@batname) that could be calling the bot.
+        Detect two types of command (simple /cmd or /cmd@botname) that could be calling the bot.
         :param cmd: the command
         :param msg: incoming message to be checked
         :return: if one of two types of command is detected
@@ -451,15 +451,18 @@ class Bot(User):
         except UserNotFoundError:
             pass
 
-    def secure_record_fetch(self, key: str, data_type: type) -> tuple[Any, dict[str, Any]]:
+    def secure_record_fetch(self, key: str, data_type: type, file: str = None) -> tuple[Any, dict[str, Any]]:
         """
         Securely read a record json file. Create file or json objects if needed.
+        :param file: file path
         :param key: Name of the data you want in record file
         :param data_type: Type of the data. For example, if it is trusted user list, data_type will be list.
         :return: a tuple. The first element is the data you asked for. The second is the deserialized record file.
         """
+        if file is None:
+            file = self.config['record']
         try:
-            rec = json.load(open(self.config['record'], 'r', encoding='utf-8'))
+            rec = json.load(open(file, 'r', encoding='utf-8'))
         except FileNotFoundError:
             record_list, rec = data_type(), {}
             json.dump({key: record_list}, open(self.config['record'], 'w', encoding='utf-8'), indent=2,
