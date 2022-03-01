@@ -1,5 +1,7 @@
+import json
 import threading
-from typing import List, Dict
+import time
+from typing import Callable, Any
 
 import requests
 
@@ -58,25 +60,25 @@ class Bot(User):
                        'timeout': timeout,
                        'allowed_updates': [
                            # Accept all updates, but only part of them are available in catbot
-                           'message',   # Available
+                           'message',  # Available
                            'edited_message',
                            'channel_post',
                            'edited_channel_post',
                            'inline_query',
                            'chosen_inline_result',
-                           'callback_query',    # Available
+                           'callback_query',  # Available
                            'shipping_query',
                            'pre_checkout_query',
                            'poll',
                            'poll_answer',
                            'my_chat_member',
-                           'chat_member'        # Available
+                           'chat_member'  # Available
                        ]}
         updates = self.api('getUpdates', update_data)
         print(updates)
         return updates
 
-    def add_msg_task(self, criteria, action, **action_kw):
+    def add_msg_task(self, criteria: Callable[["Message"], bool], action: Callable[["Message"], None], **action_kw):
         """
         Add tasks for the bot to process. For message updates only. Use add_query_task for callback query updates.
         :param criteria:
@@ -93,14 +95,16 @@ class Bot(User):
         """
         self.msg_tasks.append((criteria, action, action_kw))
 
-    def add_query_task(self, criteria, action, **action_kw):
+    def add_query_task(self, criteria: Callable[["CallbackQuery"], bool],
+                       action: [["CallbackQuery", None]], **action_kw):
         """
         Similar to add_msg_task, which add criteria and action for callback queries, typically clicks from
         in-message buttons (I would like to call them in-message instead of inline, which is used by Telegram).
         """
         self.query_tasks.append((criteria, action, action_kw))
 
-    def add_member_status_task(self, criteria, action, **action_kw):
+    def add_member_status_task(self, criteria: Callable[["ChatMemberUpdate"], bool],
+                               action: [["ChatMemberUpdate"], None], **action_kw):
         """
         Similar to add_msg_task, which add criteria and action for chat member updates.
         """
@@ -141,7 +145,7 @@ class Bot(User):
                 else:
                     continue
 
-    def send_message(self, chat_id, **kw):
+    def send_message(self, chat_id, **kw) -> "Message":
         """
         :param chat_id: Unique identifier for the target chat or username of the target channel
         :param kw: Keyword arguments defined in Telegram bot api. See https://core.telegram.org/bots/api#sendmessage<br>
@@ -167,7 +171,7 @@ class Bot(User):
         msg_kw = {'chat_id': chat_id, **kw}
         return Message(self.api('sendMessage', msg_kw))
 
-    def edit_message(self, chat_id, msg_id, **kw):
+    def edit_message(self, chat_id, msg_id, **kw) -> "Message":
         if 'reply_markup' in kw.keys():
             kw['reply_markup'] = kw['reply_markup'].parse()
 
@@ -180,7 +184,7 @@ class Bot(User):
             else:
                 raise
 
-    def forward_message(self, from_chat_id, to_chat_id, msg_id: int, disable_notification=False):
+    def forward_message(self, from_chat_id, to_chat_id, msg_id, disable_notification=False) -> "Message":
         """
         :param from_chat_id: Unique identifier for the chat where the original message was sent
         :param to_chat_id: Unique identifier for the target chat or username of the target channel
@@ -194,7 +198,7 @@ class Bot(User):
                                                    'message_id': msg_id,
                                                    'disable_notification': disable_notification}))
 
-    def answer_callback_query(self, callback_query_id, **kwargs) -> bool:
+    def answer_callback_query(self, callback_query_id: str, **kwargs) -> bool:
         """
         :param callback_query_id: callback_query_id you receive in callback_query
         :param kwargs: Keyword arguments defined in Telegram bot api. You should always call this method after receiving
@@ -211,7 +215,7 @@ class Bot(User):
         """
         return self.api('answerCallbackQuery', {'callback_query_id': callback_query_id, **kwargs})
 
-    def get_chat(self, chat_id: int):
+    def get_chat(self, chat_id) -> "Chat":
         try:
             chat = Chat(self.api('getChat', {'chat_id': chat_id}))
         except APIError as e:
@@ -222,7 +226,7 @@ class Bot(User):
         else:
             return chat
 
-    def get_chat_member(self, chat_id: int, user_id: int):
+    def get_chat_member(self, chat_id, user_id) -> "ChatMember":
         """
         Typically, use this method to build a ChatMember object.
         :param chat_id: ID of the chat that the ChatMember object will belong to.
@@ -239,7 +243,7 @@ class Bot(User):
         else:
             return chat_member
 
-    def restrict_chat_member(self, chat_id: int, user_id: int, until: int = 5, **permissions) -> bool:
+    def restrict_chat_member(self, chat_id, user_id, until: int = 5, **permissions) -> bool:
         """
         :param chat_id: Unique identifier for the target chat or username of the target supergroup
         :param user_id: Unique identifier of the target user
@@ -282,7 +286,7 @@ class Bot(User):
         else:
             return result
 
-    def silence_chat_member(self, chat_id: int, user_id: int, until: int = 5) -> bool:
+    def silence_chat_member(self, chat_id, user_id, until: int = 5) -> bool:
         """
         Remove can_send_messages permission from specified user.
         :param chat_id: Unique identifier for the target chat or username of the target supergroup
@@ -310,7 +314,7 @@ class Bot(User):
         else:
             return result
 
-    def lift_restrictions(self, chat_id: int, user_id: int) -> bool:
+    def lift_restrictions(self, chat_id, user_id) -> bool:
         """
         Lift all restrictions on specified user.
         :param chat_id: Unique identifier for the target chat or username of the target supergroup
@@ -341,7 +345,7 @@ class Bot(User):
         else:
             return result
 
-    def kick_chat_member(self, chat_id: int, user_id: int, until: int = 0, no_ban: bool = False) -> bool:
+    def kick_chat_member(self, chat_id, user_id, until: int = 0, no_ban: bool = False) -> bool:
         """
         Kick chat member out. See https://core.telegram.org/bots/api#kickchatmember
         :param chat_id: Unique identifier for the target chat or username of the target supergroup
@@ -372,7 +376,7 @@ class Bot(User):
         else:
             return result
 
-    def unban_chat_member(self, chat_id: int, user_id: int) -> bool:
+    def unban_chat_member(self, chat_id, user_id) -> bool:
         """
         Unban a banned user. See https://core.telegram.org/bots/api#unbanchatmember
         :param chat_id: Unique identifier for the target chat or username of the target supergroup
@@ -394,7 +398,7 @@ class Bot(User):
         else:
             return result
 
-    def delete_message(self, chat_id: int, msg_id: int) -> bool:
+    def delete_message(self, chat_id, msg_id) -> bool:
         try:
             result = self.api('deleteMessage', {'chat_id': chat_id, 'message_id': msg_id})
         except APIError as e:
@@ -406,9 +410,71 @@ class Bot(User):
         else:
             return result
 
+    """
+    Methods below are bot-related utility methods which are not abstractions of Telegram apis.
+    """
+
+    def detect_command(self, cmd: str, msg: "Message") -> bool:
+        """
+        Detect two types of command (simple /cmd or /cmd@batname) that could be calling the bot.
+        :param cmd: the command
+        :param msg: incoming message to be checked
+        :return: if one of two types of command is detected
+        """
+        if cmd in msg.commands:
+            return msg.text.startswith(cmd)
+        elif f'{cmd}@{self.username}' in msg.commands:
+            return msg.text.startswith(f'{cmd}@{self.username}')
+        else:
+            return False
+
+    def lift_and_preserve_restriction(self, chat_id, user_id, restricted_until: int) -> None:
+        """
+        Lift restriction but preserve previous restriction if needed. This is a utility method used in many cases.
+        :param chat_id: Unique identifier for the target chat
+        :param user_id: Unique identifier of the target user
+        :param restricted_until: Until date of the previous restriction. If it is 30 seconds or less late
+                                 than current time then the restriction will be removed.
+        """
+        member = self.get_chat_member(chat_id, user_id)
+        if member.status == 'kicked':
+            return
+        try:
+            if restricted_until <= time.time() + 35 and restricted_until != 0:
+                self.lift_restrictions(chat_id, user_id)
+            else:
+                self.silence_chat_member(chat_id, user_id, until=restricted_until)
+        except RestrictAdminError:
+            pass
+        except InsufficientRightError:
+            pass
+        except UserNotFoundError:
+            pass
+
+    def secure_record_fetch(self, key: str, data_type: type) -> tuple[Any, dict[str, Any]]:
+        """
+        Securely read a record json file. Create file or json objects if needed.
+        :param key: Name of the data you want in record file
+        :param data_type: Type of the data. For example, if it is trusted user list, data_type will be list.
+        :return: a tuple. The first element is the data you asked for. The second is the deserialized record file.
+        """
+        try:
+            rec = json.load(open(self.config['record'], 'r', encoding='utf-8'))
+        except FileNotFoundError:
+            record_list, rec = data_type(), {}
+            json.dump({key: record_list}, open(self.config['record'], 'w', encoding='utf-8'), indent=2,
+                      ensure_ascii=False)
+        else:
+            if key in rec.keys():
+                record_list = rec[key]
+            else:
+                record_list = data_type()
+
+        return record_list, rec
+
 
 class ChatMember(User):
-    def __init__(self, member_json: dict, chat_id: int):
+    def __init__(self, member_json: dict, chat_id):
         """
         Typically, build a ChatMember object from Bot.get_chat_member() method, which automatically get corresponding
         Chat object.
@@ -520,7 +586,7 @@ class Message:
             self.text: str = ''
 
         if 'new_chat_members' in msg_json.keys():
-            self.new_chat_members: List[User] = []
+            self.new_chat_members: list[User] = []
             for user_json in msg_json['new_chat_members']:
                 self.new_chat_members.append(User(user_json))
 
@@ -650,7 +716,7 @@ class InlineKeyboardButton:
 
 
 class InlineKeyboard:
-    def __init__(self, key_list: List[List[InlineKeyboardButton]]):
+    def __init__(self, key_list: list[list[InlineKeyboardButton]]):
         """
         :param key_list: Use InlineKeyBoardButton to structure the buttons you want and pass it into this
                          initializer. Each sublist represent a row. Buttons in the same sublist will be
@@ -659,9 +725,9 @@ class InlineKeyboard:
         self.key_list = key_list
 
     @classmethod
-    def from_json(cls, markup_json: dict):
-        markup_list: List[List[dict]] = markup_json['inline_keyboard']
-        key_list: List[List[InlineKeyboardButton]] = []
+    def from_json(cls, markup_json: dict) -> "InlineKeyboard":
+        markup_list: list[list[dict]] = markup_json['inline_keyboard']
+        key_list: list[list[InlineKeyboardButton]] = []
         for i in range(len(markup_json)):
             key_list.append([])
             for j in range(len(markup_json)):
@@ -669,8 +735,8 @@ class InlineKeyboard:
 
         return cls(key_list)
 
-    def parse(self) -> Dict[str, List[List[Dict]]]:
-        key_list: List[List[dict]] = []
+    def parse(self) -> dict[str, list[list[dict]]]:
+        key_list: list[list[dict]] = []
         for i in range(len(self.key_list)):
             key_list.append([])
             for j in range(len(self.key_list[i])):
@@ -712,7 +778,7 @@ class ChatMemberUpdate:
         self.new_chat_member = ChatMember(update_json['new_chat_member'], self.chat.id)
 
     def __str__(self):
-        return self.raw
+        return str(self.raw)
 
 
 class Chat:
@@ -753,7 +819,7 @@ class Chat:
             self.linked_chat_id: int = chat_json['linked_chat_id']
 
     def __str__(self):
-        return self.raw
+        return str(self.raw)
 
 
 class APIError(Exception):
