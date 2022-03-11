@@ -495,6 +495,13 @@ class ChatMember(User):
             self.can_be_edited: bool = member_json['can_be_edited']
             self.can_delete_messages: bool = member_json['can_delete_messages']
             self.can_promote_members: bool = member_json['can_promote_members']
+            # If it is a channel
+            if 'can_post_messages' in member_json.keys():
+                self.can_post_messages = member_json['can_post_messages']
+                self.can_edit_messages = member_json['can_edit_messages']
+            # If it is a group
+            else:
+                self.can_pin_messages = member_json['can_pin_messages']
         if self.status == 'administrator' or self.status == 'restricted':
             self.can_change_info: bool = member_json['can_change_info']
             self.can_invite_users: bool = member_json['can_invite_users']
