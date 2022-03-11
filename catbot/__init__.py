@@ -498,7 +498,6 @@ class ChatMember(User):
         if self.status == 'administrator' or self.status == 'restricted':
             self.can_change_info: bool = member_json['can_change_info']
             self.can_invite_users: bool = member_json['can_invite_users']
-            self.can_pin_messages: bool = member_json['can_pin_messages']
         if self.status == 'restricted':
             self.until_date: int = member_json['until_date']
             self.is_member: bool = member_json['is_member']
@@ -507,6 +506,7 @@ class ChatMember(User):
             self.can_send_polls: bool = member_json['can_send_polls']
             self.can_send_other_messages: bool = member_json['can_send_other_messages']  # sticker, gif and inline bot
             self.can_add_web_page_previews: bool = member_json['can_add_web_page_previews']  # "embed links" in client
+            self.can_pin_messages: bool = member_json['can_pin_messages']
         if self.status == 'kicked':
             self.until_date: int = member_json['until_date']
 
@@ -605,6 +605,7 @@ class Message:
         self.italics = []
         self.underlines = []
         self.strikethroughs = []
+        self.spoilers = []
         self.codes = []
         self.text_links = []
         self.text_mention = []
@@ -637,6 +638,9 @@ class Message:
                 elif item['type'] == 'strikethrough':
                     self.strikethroughs.append(self.text[offset:offset + length])
                     entity_to_be_formatted.append(item)
+                elif item['type'] == 'spoiler':
+                    self.spoilers.append(self.text[offset:offset + length])
+                    entity_to_be_formatted.append(item)
                 elif item['type'] == 'code':
                     self.codes.append(self.text[offset:offset + length])
                     entity_to_be_formatted.append(item)
@@ -662,6 +666,10 @@ class Message:
                                                self.html_formatted_text[offset + length:]
                 elif item['type'] == 'strikethrough':
                     self.html_formatted_text = self.text[:offset] + f'<s>{self.text[offset:offset + length]}</s>' + \
+                                               self.html_formatted_text[offset + length:]
+                elif item['type'] == 'spoiler':
+                    self.html_formatted_text = self.text[:offset] + \
+                                               f'<tg-spoiler>{self.text[offset:offset + length]}</tg-spoiler>' + \
                                                self.html_formatted_text[offset + length:]
                 elif item['type'] == 'code':
                     self.html_formatted_text = self.text[:offset] + \
