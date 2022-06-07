@@ -130,13 +130,13 @@ class Bot(User):
 
             for item in updates:
                 update_offset = item['update_id'] + 1
-                if 'message' in item.keys():
+                if 'message' in item:
                     msg = Message(item['message'])
                     for criteria, action, action_kw in self.msg_tasks:
                         if criteria(msg):
                             threading.Thread(target=action, args=(msg,), kwargs=action_kw).start()
 
-                elif 'callback_query' in item.keys():
+                elif 'callback_query' in item:
                     query = CallbackQuery(item['callback_query'])
                     if not hasattr(query, 'msg'):
                         continue
@@ -144,7 +144,7 @@ class Bot(User):
                         if criteria(query):
                             threading.Thread(target=action, args=(query,), kwargs=action_kw).start()
 
-                elif 'chat_member' in item.keys():
+                elif 'chat_member' in item:
                     member_update = ChatMemberUpdate(item['chat_member'])
                     for criteria, action, action_kw in self.member_status_tasks:
                         if criteria(member_update):
@@ -177,14 +177,14 @@ class Bot(User):
                                 from the user. A common content of this param is an InlineKeyboard object.<br>
         :return:
         """
-        if 'reply_markup' in kw.keys():
+        if 'reply_markup' in kw:
             kw['reply_markup'] = kw['reply_markup'].parse()
 
         msg_kw = {'chat_id': chat_id, **kw}
         return Message(self.api('sendMessage', msg_kw))
 
     def edit_message(self, chat_id, msg_id, **kw) -> "Message":
-        if 'reply_markup' in kw.keys():
+        if 'reply_markup' in kw:
             kw['reply_markup'] = kw['reply_markup'].parse()
 
         msg_kw = {'chat_id': chat_id, 'message_id': msg_id, **kw}
@@ -414,7 +414,7 @@ class Bot(User):
         try:
             result = self.api('deleteMessage', {'chat_id': chat_id, 'message_id': msg_id})
         except APIError as e:
-            if 'Bad Request: message to delete not found' in e.args[0] or \
+            if 'Bad Request: message identifier is not specified' in e.args[0] or \
                     'Bad Request: message can\'t be deleted' in e.args[0]:
                 raise DeleteMessageError
             else:
@@ -480,7 +480,7 @@ class Bot(User):
             json.dump({key: record_list}, open(self.config['record'], 'w', encoding='utf-8'), indent=2,
                       ensure_ascii=False)
         else:
-            if key in rec.keys():
+            if key in rec:
                 record_list = rec[key]
             else:
                 record_list = data_type()
@@ -508,7 +508,7 @@ class ChatMember(User):
             self.can_delete_messages: bool = member_json['can_delete_messages']
             self.can_promote_members: bool = member_json['can_promote_members']
             # If it is a channel
-            if 'can_post_messages' in member_json.keys():
+            if 'can_post_messages' in member_json:
                 self.can_post_messages = member_json['can_post_messages']
                 self.can_edit_messages = member_json['can_edit_messages']
             # If it is a group
@@ -529,7 +529,7 @@ class ChatMember(User):
         if self.status == 'kicked':
             self.until_date: int = member_json['until_date']
 
-        if 'custom_title' in member_json.keys():
+        if 'custom_title' in member_json:
             self.custom_title: str = member_json['custom_title']
 
     def __str__(self):
@@ -543,7 +543,7 @@ class Message:
         self.id: int = msg_json['message_id']
 
         # Empty for message in channels
-        if 'from' in msg_json.keys():
+        if 'from' in msg_json:
             self.from_ = User(msg_json['from'])
 
         if str(self.chat.id).startswith('-100'):
@@ -553,32 +553,32 @@ class Message:
 
         # The channel itself for channel messages. The supergroup itself for messages from anonymous group 
         # administrators. The linked channel for messages automatically forwarded to the discussion group
-        if 'sender_chat' in msg_json.keys():
+        if 'sender_chat' in msg_json:
             self.sender_chat = Chat(msg_json['sender_chat'])
         self.date: int = msg_json['date']
 
         # Signature of the post author for messages in channels, or the custom title of an anonymous group administrator
-        if 'author_signature' in msg_json.keys():
+        if 'author_signature' in msg_json:
             self.author_signature: str = msg_json['author_signature']
 
-        if 'forward_from' in msg_json.keys():
+        if 'forward_from' in msg_json:
             # forwarded from users who allowed a link to their account in forwarded message
             self.forward_from = User(msg_json['forward_from'])
             self.forward = True
-        elif 'forward_sender_name' in msg_json.keys():
+        elif 'forward_sender_name' in msg_json:
             # forwarded from users who disallowed a link to their account in forwarded message
             self.forward_sender_name: str = msg_json['forward_sender_name']
             self.forward = True
-        elif 'forward_from_message_id' in msg_json.keys():
+        elif 'forward_from_message_id' in msg_json:
             # forwarded from channels
             self.forward_from_chat = Chat(msg_json['forward_from_chat'])
             self.forward_from_message_id: int = msg_json['forward_from_message_id']
-            if 'forward_signature' in msg_json.keys():
+            if 'forward_signature' in msg_json:
                 self.forward_signature: str = msg_json['forward_signature']
             else:
                 self.forward_signature = ''
             self.forward = True
-        elif 'forward_from_chat' in msg_json.keys():
+        elif 'forward_from_chat' in msg_json:
             # forwarded from anonymous admins
             self.forward_from_chat = Chat(msg_json['forward_from_chat'])
             self.forward = True
@@ -588,31 +588,31 @@ class Message:
         if self.forward:
             self.forward_date: int = msg_json['forward_date']
 
-        if 'reply_to_message' in msg_json.keys():
+        if 'reply_to_message' in msg_json:
             self.reply_to_message = Message(msg_json['reply_to_message'])
             self.reply = True
         else:
             self.reply = False
 
-        if 'edit_date' in msg_json.keys():
+        if 'edit_date' in msg_json:
             self.edit_date: int = msg_json['edit_date']
             self.edit = True
         else:
             self.edit = False
 
-        if 'text' in msg_json.keys():
+        if 'text' in msg_json:
             self.text: str = msg_json['text']
-        elif 'caption' in msg_json.keys():
+        elif 'caption' in msg_json:
             self.text: str = msg_json['caption']
         else:
             self.text: str = ''
 
-        if 'new_chat_members' in msg_json.keys():
+        if 'new_chat_members' in msg_json:
             self.new_chat_members: list[User] = []
             for user_json in msg_json['new_chat_members']:
                 self.new_chat_members.append(User(user_json))
 
-        if 'left_chat_member' in msg_json.keys():
+        if 'left_chat_member' in msg_json:
             self.left_chat_member: User = User(msg_json['left_chat_member'])
 
         self.mentions = []
@@ -629,8 +629,8 @@ class Message:
         self.text_links = []
         self.text_mention = []
         self.html_formatted_text = self.text
-        if 'entities' in msg_json.keys() or 'caption_entities' in msg_json.keys():
-            entity_type = 'entities' if 'entities' in msg_json.keys() else 'caption_entities'
+        if 'entities' in msg_json or 'caption_entities' in msg_json:
+            entity_type = 'entities' if 'entities' in msg_json else 'caption_entities'
             entity_to_be_formatted = []
             for item in msg_json[entity_type]:
                 offset = item['offset']
@@ -703,14 +703,14 @@ class Message:
                                                                     f"{self.text[offset:offset + length]}</a>" + \
                                                self.html_formatted_text[offset + length:]
 
-        if 'dice' in msg_json.keys():
+        if 'dice' in msg_json:
             self.dice = True
             self.dice_emoji = msg_json['dice']['emoji']
             self.dice_value = msg_json['dice']['value']
         else:
             self.dice = False
 
-        if 'reply_markup' in msg_json.keys():
+        if 'reply_markup' in msg_json:
             self.reply_markup: InlineKeyboard = InlineKeyboard.from_json(msg_json['reply_markup'])
 
     def __str__(self):
@@ -729,9 +729,9 @@ class InlineKeyboardButton:
         self.text = text
         if len(kwargs) == 0:
             raise APIError('Inline keyboard button must have either url or callback_data.')
-        if 'url' in kwargs.keys():
+        if 'url' in kwargs:
             self.url = kwargs['url']
-        if 'callback_data' in kwargs.keys():
+        if 'callback_data' in kwargs:
             self.callback_data = kwargs['callback_data']
 
     @classmethod
@@ -780,16 +780,16 @@ class CallbackQuery:
         self.raw = query_json
         self.id: str = query_json['id']
         self.from_ = User(query_json['from'])
-        if 'message' not in query_json.keys():
+        if 'message' not in query_json:
             self.msg = ''
         else:
             self.msg = Message(query_json['message'])
         self.chat_instance: str = query_json['chat_instance']
-        if 'data' in query_json.keys():
+        if 'data' in query_json:
             self.data: str = query_json['data']
         else:
             self.data = ''
-        if 'inline_message_id' in query_json.keys():
+        if 'inline_message_id' in query_json:
             self.inline_message_id: str = query_json['inline_message_id']
         else:
             self.inline_message_id = ''
@@ -820,12 +820,12 @@ class Chat:
         if self.type == 'supergroup' or self.type == 'group' or self.type == 'channel':
             self.name: str = chat_json['title']
         else:
-            if 'last_name' in chat_json.keys():
+            if 'last_name' in chat_json:
                 self.name = f'{chat_json["first_name"]} {chat_json["last_name"]}'
             else:
                 self.name = chat_json['first_name']
 
-        if 'username' in chat_json.keys():
+        if 'username' in chat_json:
             self.username: str = chat_json['username']
             self.link = 't.me/' + self.username
         else:
@@ -833,18 +833,18 @@ class Chat:
             self.link = ''
 
         # Returned by get_chat
-        if 'bio' in chat_json.keys():
+        if 'bio' in chat_json:
             # If the chat is private chat
             self.bio: str = chat_json['bio']
-        if 'description' in chat_json.keys():
+        if 'description' in chat_json:
             # If the chat is group, supergroup or channel
             self.description: str = chat_json['description']
-        if 'pinned_message' in chat_json.keys():
+        if 'pinned_message' in chat_json:
             self.pinned_message = Message(chat_json['pinned_message'])
-        if 'slow_mode_delay' in chat_json.keys():
+        if 'slow_mode_delay' in chat_json:
             # If the chat is supergroup
             self.slow_mode_delay: int = chat_json['slow_mode_delay']
-        if 'linked_chat_id' in chat_json.keys():
+        if 'linked_chat_id' in chat_json:
             # If the supergroup or channel has a linked channel or supergroup, respectively
             self.linked_chat_id: int = chat_json['linked_chat_id']
 
