@@ -426,14 +426,16 @@ class Bot(User):
     Methods below are bot-related utility methods which are not abstractions of Telegram apis.
     """
 
-    def detect_command(self, cmd: str, msg: "Message") -> bool:
+    def detect_command(self, cmd: str, msg: "Message", require_username=False) -> bool:
         """
         Detect two types of command (simple /cmd or /cmd@botname) that could be calling the bot.
         :param cmd: the command
         :param msg: incoming message to be checked
+        :param require_username: True if only commands with username of the bot are detected, e.g. /start@somebot
+                     False if all commands are considered
         :return: if one of two types of command is detected
         """
-        if cmd in msg.commands:
+        if cmd in msg.commands and not require_username:
             return msg.text.startswith(cmd)
         elif f'{cmd}@{self.username}' in msg.commands:
             return msg.text.startswith(f'{cmd}@{self.username}')
