@@ -47,6 +47,7 @@ class Bot(User):
         self.msg_tasks = []
         self.query_tasks = []
         self.member_status_tasks = []
+        self.my_member_status_tasks = []
 
     def api(self, action: str, data: dict):
         resp = requests.post(self.base_url + action, json=data, **self.proxy_kw).json()
@@ -110,6 +111,13 @@ class Bot(User):
         """
         self.member_status_tasks.append((criteria, action, action_kw))
 
+    def add_my_member_status_task(self, criteria: Callable[["ChatMemberUpdate"], bool],
+                                  action: [["ChatMemberUpdate"], None], **action_kw):
+        """
+        Similar to add_msg_task, which add criteria and action for bot chat member updates.
+        """
+        self.my_member_status_tasks.append((criteria, action, action_kw))
+
     def start(self):
         old_updates = self.get_updates(timeout=0)
         update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
@@ -141,7 +149,11 @@ class Bot(User):
                     for criteria, action, action_kw in self.member_status_tasks:
                         if criteria(member_update):
                             threading.Thread(target=action, args=(member_update,), kwargs=action_kw).start()
-
+                elif 'my_chat_member' in item:
+                    member_update = ChatMemberUpdate(item['my_chat_member'])
+                    for criteria, action, action_kw in self.my_member_status_tasks:
+                        if criteria(member_update):
+                            threading.Thread(target=action, args=(member_update,), kwargs=action_kw).start()
                 else:
                     continue
 
