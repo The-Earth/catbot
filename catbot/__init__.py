@@ -422,6 +422,33 @@ class Bot(User):
         else:
             return result
 
+    def get_file(self, file_id: str) -> "File":
+        try:
+            result = File(self.api('getFile', {'file_id': file_id}))
+        except APIError as e:
+            if 'invalid file_id' in e.args[0]:
+                raise InvalidFileIdError
+        else:
+            return result
+
+    def download(self, file: "File", path: str):
+        """
+        Download the file to path
+        :param file: the File object to download
+        :param path: where downloaded content is saved
+        :return:
+        """
+        if file.file_path:
+            res = requests.get(f'https://api.telegram.org/file/bot{self.token}/{file.file_path}')
+            if res.status_code == 200:
+                content = res.content
+            else:
+                raise FilePathError(f'File path {file.file_path} error or expired.')
+        else:
+            raise FilePathError('File path not found.')
+        with open(path, 'wb') as f:
+            f.write(content)
+
     """
     Methods below are bot-related utility methods which are not abstractions of Telegram apis.
     """
@@ -608,6 +635,14 @@ class Message:
             self.text: str = msg_json['caption']
         else:
             self.text: str = ''
+
+        if 'photo' in msg_json:
+            self.photo: list[PhotoSize] = []
+            self.has_photo = True
+            for photo in msg_json['photo']:
+                self.photo.append(PhotoSize(photo))
+        else:
+            self.has_photo = False
 
         if 'new_chat_members' in msg_json:
             self.new_chat_members: list[User] = []
@@ -854,6 +889,32 @@ class Chat:
         return str(self.raw)
 
 
+class File:
+    def __init__(self, file_json: dict):
+        self.file_id: str = file_json['file_id']
+        self.file_unique_id: str = file_json['file_unique_id']
+        if 'file_size' in file_json:
+            self.file_size: int = file_json['file_size']
+        else:
+            self.file_size = -1
+        if 'file_path' in file_json:
+            self.file_path: str = file_json['file_path']
+        else:
+            self.file_path = ''
+
+
+class PhotoSize:
+    def __init__(self, photo_json: dict):
+        self.file_id: str = photo_json['file_id']
+        self.file_unique_id: str = photo_json['file_unique_id']
+        self.width: int = photo_json['width']
+        self.height: int = photo_json['height']
+        if 'file_size' in photo_json:
+            self.file_size: int = photo_json['file_size']
+        else:
+            self.file_size = -1
+
+
 class APIError(Exception):
     pass
 
@@ -875,4 +936,12 @@ class RestrictAdminError(APIError):
 
 
 class DeleteMessageError(APIError):
+    pass
+
+
+class InvalidFileIdError(APIError):
+    pass
+
+
+class FilePathError(APIError):
     pass
