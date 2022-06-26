@@ -431,12 +431,12 @@ class Bot(User):
         else:
             return result
 
-    def download(self, file: "File", path: str):
+    def download(self, file: "File", path: str = None):
         """
         Download the file to path
         :param file: the File object to download
-        :param path: where downloaded content is saved
-        :return:
+        :param path: optional, where downloaded content is saved
+        :return: if path is not given, return byte buffer
         """
         if file.file_path:
             res = requests.get(f'https://api.telegram.org/file/bot{self.token}/{file.file_path}')
@@ -446,8 +446,11 @@ class Bot(User):
                 raise FilePathError(f'File path {file.file_path} error or expired.')
         else:
             raise FilePathError('File path not found.')
-        with open(path, 'wb') as f:
-            f.write(content)
+        if path:
+            with open(path, 'wb') as f:
+                f.write(content)
+        else:
+            return content
 
     """
     Methods below are bot-related utility methods which are not abstractions of Telegram apis.
