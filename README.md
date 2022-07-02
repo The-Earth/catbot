@@ -4,6 +4,8 @@ catbot is a multithread library for [Telegram](https://t.me) bot development. It
 
 ## Installation
 
+We need Python 3.10+ and the latest [requests](https://github.com/psf/requests) to run our bots.
+
 Find `catbot-x.tar.gz` in [release](https://github.com/The-Earth/catbot/releases), download the latest version and install it by 
 
 ```shell

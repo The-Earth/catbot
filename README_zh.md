@@ -1,8 +1,10 @@
 # catbot
 
-catbot 是一个多线程的 [Telegram](https://t.me) 机器人开发库，提供 [Telegram bot API](https://core.telegram.org/bots/api) 的 Python 接口，并帮助管理机器人收到的[新消息](https://core.telegram.org/bots/api#getting-updates) 。
+catbot 是一个多线程的 [Telegram](https://t.me) 机器人开发框架，提供 [Telegram bot API](https://core.telegram.org/bots/api) 的 Python 接口，并帮助管理机器人收到的[新消息](https://core.telegram.org/bots/api#getting-updates) 。
 
 ## 安装
+
+需要 Python 3.10+ 和最新的 [requests](https://github.com/psf/requests) 来运行基于 catbot 的机器人。
 
 在 [Release](https://github.com/The-Earth/catbot/releases) 中下载 `catbot-x.tar.gz`，然后用 pip 安装：
 
