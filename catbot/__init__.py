@@ -255,7 +255,14 @@ class Bot(User):
         else:
             return chat_member
 
-    def restrict_chat_member(self, chat_id, user_id, until: int = 5, **permissions) -> bool:
+    def restrict_chat_member(
+            self,
+            chat_id,
+            user_id,
+            until: int = 5,
+            use_independent_chat_permissions: bool = False,
+            **permissions
+    ) -> bool:
         """
         :param chat_id: Unique identifier for the target chat or username of the target supergroup
         :param user_id: Unique identifier of the target user
@@ -268,22 +275,37 @@ class Bot(User):
                             See https://core.telegram.org/bots/api#chatpermissions
             - can_send_messages: Optional. True, if the user is allowed to send text messages, contacts, locations and
                                  venues
-            - can_send_media_messages: Optional. True, if the user is allowed to send audios, documents, photos, videos,
-                                       video notes and voice notes, implies can_send_messages
+            - can_send_audios: Optional. True, if the user is allowed to send audios
+            - can_send_documents: Optional. True, if the user is allowed to send documents
+            - can_send_photos: Optional. True, if the user is allowed to send photos
+            - can_send_videos: Optional. True, if the user is allowed to send videos
+            - can_send_video_notes: Optional. True, if the user is allowed to send video notes
+            - can_send_voice_notes: Optional. True, if the user is allowed to send voice notes
             - can_send_polls: Optional. True, if the user is allowed to send polls, implies can_send_messages
             - can_send_other_messages: Optional. True, if the user is allowed to send animations, games, stickers and
-                                       use inline bots, implies can_send_media_messages
+                                       use inline bots
             - can_add_web_page_previews: Optional. True, if the user is allowed to add web page previews to their
-                                         messages, implies can_send_media_messages
+                                         messages
             - can_change_info: Optional. True, if the user is allowed to change the chat title, photo and other
                                settings. Ignored in public supergroups
             - can_invite_users: Optional. True, if the user is allowed to invite new users to the chat
             - can_pin_messages: Optional. True, if the user is allowed to pin messages. Ignored in public supergroups
+        :param use_independent_chat_permissions: Pass True if chat permissions are set independently. Otherwise,
+                                                 the can_send_other_messages and can_add_web_page_previews permissions
+                                                 will imply the can_send_messages, can_send_audios, can_send_documents,
+                                                 can_send_photos, can_send_videos, can_send_video_notes,
+                                                 and can_send_voice_notes permissions; the can_send_polls permission
+                                                 will imply the can_send_messages permission.
         :return: Return True on success, otherwise raise exception.
         """
         try:
-            result = self.api('restrictChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until,
-                                                     'permissions': permissions})
+            result = self.api('restrictChatMember', {
+                'chat_id': chat_id,
+                'user_id': user_id,
+                'until_date': until,
+                'use_independent_chat_permissions': use_independent_chat_permissions,
+                'permissions': permissions
+            })
         except APIError as e:
             if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
                 raise InsufficientRightError
@@ -309,22 +331,21 @@ class Bot(User):
                       Default: Forever
         :return: Return True on success, otherwise raise exception.
         """
-        try:
-            result = self.api('restrictChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until,
-                                                     'permissions': {'can_send_messages': False}})
-        except APIError as e:
-            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError
-            elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError
-            elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
-                    'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError
-            else:
-                raise
-        else:
-            return result
+        return self.restrict_chat_member(
+            chat_id=chat_id,
+            user_id=user_id,
+            until=until,
+            can_send_messages=False,
+            can_send_audios=False,
+            can_send_documents=False,
+            can_send_photos=False,
+            can_send_videos=False,
+            can_send_video_notes=False,
+            can_send_voice_notes=False,
+            can_send_polls=False,
+            can_send_other_messages=False,
+            can_add_web_page_previews=False
+        )
 
     def lift_restrictions(self, chat_id, user_id) -> bool:
         """
@@ -333,29 +354,21 @@ class Bot(User):
         :param user_id: Unique identifier of the target user
         :return: Return True on success, otherwise raise exception.
         """
-        try:
-            result = self.api('restrictChatMember', {'chat_id': chat_id, 'user_id': user_id,
-                                                     'permissions': {'can_send_messages': True,
-                                                                     'can_send_media_messages': True,
-                                                                     'can_send_polls': True,
-                                                                     'can_send_other_messages': True,
-                                                                     'can_add_web_page_previews': True,
-                                                                     'can_change_info': True,
-                                                                     'can_invite_users': True,
-                                                                     'can_pin_messages': True}})
-        except APIError as e:
-            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError
-            elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError
-            elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
-                    'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError
-            else:
-                raise
-        else:
-            return result
+        return self.restrict_chat_member(
+            chat_id=chat_id,
+            user_id=user_id,
+            until=int(time.time()) + 35,
+            can_send_messages=True,
+            can_send_audios=True,
+            can_send_documents=True,
+            can_send_photos=True,
+            can_send_videos=True,
+            can_send_video_notes=True,
+            can_send_voice_notes=True,
+            can_send_polls=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True
+        )
 
     def kick_chat_member(self, chat_id, user_id, until: int = 0, no_ban: bool = False) -> bool:
         """
@@ -553,7 +566,12 @@ class ChatMember(User):
             self.until_date: int = member_json['until_date']
             self.is_member: bool = member_json['is_member']
             self.can_send_messages: bool = member_json['can_send_messages']
-            self.can_send_media_messages: bool = member_json['can_send_media_messages']
+            self.can_send_audios: bool = member_json['can_send_audios']
+            self.can_send_documents: bool = member_json['can_send_documents']
+            self.can_send_photos: bool = member_json['can_send_photos']
+            self.can_send_videos: bool = member_json['can_send_videos']
+            self.can_send_video_notes: bool = member_json['can_send_video_notes']
+            self.can_send_voice_notes: bool = member_json['can_send_voice_notes']
             self.can_send_polls: bool = member_json['can_send_polls']
             self.can_send_other_messages: bool = member_json['can_send_other_messages']  # sticker, gif and inline bot
             self.can_add_web_page_previews: bool = member_json['can_add_web_page_previews']  # "embed links" in client
