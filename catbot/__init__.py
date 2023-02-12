@@ -79,7 +79,12 @@ class Bot(User):
         print(updates)
         return updates
 
-    def add_msg_task(self, criteria: Callable[["Message"], bool], action: Callable[["Message"], None], **action_kw):
+    def add_msg_task(
+            self,
+            criteria: Callable[["Message"], bool],
+            action: Callable[["Message"], None],
+            **action_kw
+    ):
         """
         Add tasks for the bot to process. For message updates only. Use add_query_task for callback query updates.
         :param criteria:
@@ -87,7 +92,7 @@ class Bot(User):
             only argument and returns a bool. When it returns True, "action" will be executed. An example is to return
             True if the message starts with "/start", which is the standard starting of private chats with users.
         :param action:
-            A function to be executed when criteria returns True. Typically it's the response on users' actions.
+            A function to be executed when criteria returns True. Typically, it's the response on users' actions.
             It should take a Message-like object as the only positional argument and accept keyword arguments. Arguments
             in action_kw will be passed to it.
         :param action_kw:
@@ -96,23 +101,33 @@ class Bot(User):
         """
         self.msg_tasks.append((criteria, action, action_kw))
 
-    def add_query_task(self, criteria: Callable[["CallbackQuery"], bool],
-                       action: [["CallbackQuery", None]], **action_kw):
+    def add_query_task(
+            self,
+            criteria: Callable[["CallbackQuery"], bool],
+            action: Callable[["CallbackQuery"], None],
+            **action_kw
+    ):
         """
         Similar to add_msg_task, which add criteria and action for callback queries, typically clicks from
         in-message buttons (I would like to call them in-message instead of inline, which is used by Telegram).
         """
         self.query_tasks.append((criteria, action, action_kw))
 
-    def add_member_status_task(self, criteria: Callable[["ChatMemberUpdate"], bool],
-                               action: [["ChatMemberUpdate"], None], **action_kw):
+    def add_member_status_task(
+            self,
+            criteria: Callable[["ChatMemberUpdate"], bool],
+            action: Callable[["ChatMemberUpdate"], None],
+            **action_kw
+    ):
         """
         Similar to add_msg_task, which add criteria and action for chat member updates.
         """
         self.member_status_tasks.append((criteria, action, action_kw))
 
-    def add_my_member_status_task(self, criteria: Callable[["ChatMemberUpdate"], bool],
-                                  action: [["ChatMemberUpdate"], None], **action_kw):
+    def add_my_member_status_task(
+            self, criteria: Callable[["ChatMemberUpdate"], bool],
+            action: Callable[["ChatMemberUpdate"], None],
+            **action_kw):
         """
         Similar to add_msg_task, which add criteria and action for bot chat member updates.
         """
@@ -205,10 +220,12 @@ class Bot(User):
                                      notification with no sound.
         :return: The forwarded message.
         """
-        return Message(self.api('forwardMessage', {'from_chat_id': from_chat_id,
-                                                   'chat_id': to_chat_id,
-                                                   'message_id': msg_id,
-                                                   'disable_notification': disable_notification}))
+        return Message(self.api('forwardMessage', {
+            'from_chat_id': from_chat_id,
+            'chat_id': to_chat_id,
+            'message_id': msg_id,
+            'disable_notification': disable_notification
+        }))
 
     def answer_callback_query(self, callback_query_id: str, **kwargs) -> bool:
         """
@@ -246,7 +263,10 @@ class Bot(User):
         :return: A ChatMember object, including info about permissions granted to the user in a specific chat.
         """
         try:
-            chat_member = ChatMember(self.api('getChatMember', {'chat_id': chat_id, 'user_id': user_id}), chat_id)
+            chat_member = ChatMember(self.api('getChatMember', {
+                'chat_id': chat_id,
+                'user_id': user_id
+            }), chat_id)
         except APIError as e:
             if 'Bad Request: user not found' in e.args[0]:
                 raise UserNotFoundError
