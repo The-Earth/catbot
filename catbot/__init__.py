@@ -176,7 +176,7 @@ class Bot(User):
         """
         :param chat_id: Unique identifier for the target chat or username of the target channel
         :param text: Text of the message to be sent, 1-4096 characters after entities parsing.
-                     Catbot will split text longer than 4000 into multiple messages.
+                     For plain text, catbot will split text longer than 4000 into multiple messages.
         :param kw: Keyword arguments defined in Telegram bot api. See https://core.telegram.org/bots/api#sendmessage<br>
             General keywords:<br>
                 - parse_mode: Optional. Should be one of MarkdownV2 or HTML or Markdown.<br>
@@ -192,12 +192,12 @@ class Bot(User):
                 - reply_markup: Additional interface options. A JSON-serialized object for an inline keyboard,
                                 custom reply keyboard, instructions to remove reply keyboard or to force a reply
                                 from the user. A common content of this param is an InlineKeyboard object.<br>
-        :return: Message sent or the last message sent for text longer than 4000.
+        :return: Message sent or the last message sent for it's split.
         """
         if 'reply_markup' in kw:
             kw['reply_markup'] = kw['reply_markup'].parse()
 
-        if len(text) > 4000:
+        if len(text) > 4000 and 'parse_mode' not in kw:
             text_part = [text[i * 4000 : (i + 1) * 4000] for i in range(len(text) // 4000 + 1)]
             sent_msg = None
             for i in range(len(text_part)):
