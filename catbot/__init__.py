@@ -76,7 +76,7 @@ class Bot(User):
                            'chat_member'  # Available
                        ]}
         updates = self.api('getUpdates', update_data)
-        print(updates)
+        # print(updates)
         return updates
 
     def add_msg_task(
