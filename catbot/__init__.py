@@ -1,9 +1,12 @@
 import json
+import logging
 import threading
 import time
 from typing import Callable, Any
 
 import requests
+
+logging.basicConfig(filename='catbot.log', encoding='utf-8', level=logging.DEBUG)
 
 
 class User:
@@ -76,7 +79,7 @@ class Bot(User):
                            'chat_member'  # Available
                        ]}
         updates = self.api('getUpdates', update_data)
-        # print(updates)
+        logging.debug(updates)
         return updates
 
     def add_msg_task(
@@ -140,7 +143,7 @@ class Bot(User):
             try:
                 updates = self.get_updates(update_offset)
             except (APIError, requests.ConnectionError) as e:
-                print(e.args[0])
+                logging.warning(e.args[0])
                 continue
 
             for item in updates:
