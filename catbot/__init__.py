@@ -466,7 +466,8 @@ class Bot(User):
             result = self.api('deleteMessage', {'chat_id': chat_id, 'message_id': msg_id})
         except APIError as e:
             if 'Bad Request: message identifier is not specified' in e.args[0] or \
-                    'Bad Request: message can\'t be deleted' in e.args[0]:
+                    'Bad Request: message can\'t be deleted' in e.args[0] or \
+                    'Bad Request: message to delete not found' in e.args[0]:
                 raise DeleteMessageError
             else:
                 raise
