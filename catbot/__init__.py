@@ -2,7 +2,7 @@ import json
 import logging
 import threading
 import time
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 
 import requests
 
@@ -51,6 +51,7 @@ class Bot(User):
         self.query_tasks = []
         self.member_status_tasks = []
         self.my_member_status_tasks = []
+        self.chat_join_request_tasks = []
 
     def api(self, action: str, data: dict):
         resp = requests.post(self.base_url + action, json=data, **self.proxy_kw).json()
@@ -76,7 +77,8 @@ class Bot(User):
                            'poll',
                            'poll_answer',
                            'my_chat_member',
-                           'chat_member'  # Available
+                           'chat_member',  # Available
+                           'chat_join_request'  # Available
                        ]}
         updates = self.api('getUpdates', update_data)
         logging.debug(updates)
@@ -136,6 +138,15 @@ class Bot(User):
         """
         self.my_member_status_tasks.append((criteria, action, action_kw))
 
+    def add_chat_join_request_task(
+            self, criteria: Callable[["ChatJoinRequest"], bool],
+            action: Callable[["ChatJoinRequest"], None],
+            **action_kw):
+        """
+        Similar to add_msg_task, which add criteria and action for bot chat join request updates.
+        """
+        self.chat_join_request_tasks.append((criteria, action, action_kw))
+
     def start(self):
         old_updates = self.get_updates(timeout=0)
         update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
@@ -172,6 +183,12 @@ class Bot(User):
                     for criteria, action, action_kw in self.my_member_status_tasks:
                         if criteria(member_update):
                             threading.Thread(target=action, args=(member_update,), kwargs=action_kw).start()
+
+                elif 'chat_join_request' in item:
+                    join_request_update = ChatJoinRequest(item['chat_join_request'])
+                    for criteria, action, action_kw in self.chat_join_request_tasks:
+                        if criteria(join_request_update):
+                            threading.Thread(target=action, args=(join_request_update,), kwargs=action_kw).start()
                 else:
                     continue
 
@@ -469,6 +486,34 @@ class Bot(User):
                     'Bad Request: message can\'t be deleted' in e.args[0] or \
                     'Bad Request: message to delete not found' in e.args[0]:
                 raise DeleteMessageError
+            else:
+                raise
+        else:
+            return result
+
+    def approve_chat_join_request(self, chat_id, user_id) -> bool:
+        try:
+            result = self.api('approveChatJoinRequest', {'chat_id': chat_id, 'user_id': user_id})
+        except APIError as e:
+            if 'Bad Request: USER_ALREADY_PARTICIPANT' in e.args[0]:
+                raise JoinRequestUserAlreadyParticipantError from e
+            elif 'Bad Request: USER_ID_INVALID' in e.args[0] or \
+                    'Bad Request: HIDE_REQUESTER_MISSING' in e.args[0]:
+                raise JoinRequestNotFoundError from e
+            else:
+                raise
+        else:
+            return result
+
+    def decline_chat_join_request(self, chat_id, user_id) -> bool:
+        try:
+            result = self.api('declineChatJoinRequest', {'chat_id': chat_id, 'user_id': user_id})
+        except APIError as e:
+            if 'Bad Request: USER_ALREADY_PARTICIPANT' in e.args[0]:
+                raise JoinRequestUserAlreadyParticipantError from e
+            elif 'Bad Request: USER_ID_INVALID' in e.args[0] or \
+                    'Bad Request: HIDE_REQUESTER_MISSING' in e.args[0]:
+                raise JoinRequestNotFoundError from e
             else:
                 raise
         else:
@@ -908,6 +953,55 @@ class ChatMemberUpdate:
         return str(self.raw)
 
 
+class ChatJoinRequest:
+    def __init__(self, update_json: dict):
+        self.raw = update_json
+        self.chat = Chat(update_json['chat'])
+        self.from_ = User(update_json['from'])
+        self.user_chat_id: int = update_json['user_chat_id']
+        self.date: int = update_json['date']
+        try:
+            self.bio: Optional[str] = update_json['bio']
+        except KeyError:
+            pass
+        try:
+            self.invite_link: Optional[ChatInviteLink] = ChatInviteLink(update_json['invite_link'])
+        except KeyError:
+            pass
+
+    def __str__(self):
+        return str(self.raw)
+
+
+class ChatInviteLink:
+    def __init__(self, update_json: dict):
+        self.raw = update_json
+        self.invite_link = update_json['invite_link']
+        self.creator = User(update_json['creator'])
+        self.creates_join_request: bool = update_json['creates_join_request']
+        self.is_primary: bool = update_json['is_primary']
+        self.is_revoked: bool = update_json['is_revoked']
+        try:
+            self.name: Optional[str] = update_json['name']
+        except KeyError:
+            pass
+        try:
+            self.expire_date: Optional[int] = update_json['expire_date']
+        except KeyError:
+            pass
+        try:
+            self.member_limit: Optional[int] = update_json['member_limit']
+        except KeyError:
+            pass
+        try:
+            self.pending_join_request_count: Optional[int] = update_json['pending_join_request_count']
+        except KeyError:
+            pass
+
+    def __str__(self):
+        return str(self.raw)
+
+
 class Chat:
     def __init__(self, chat_json: dict):
         self.raw = chat_json
@@ -1004,4 +1098,12 @@ class InvalidFileIdError(APIError):
 
 
 class FilePathError(APIError):
+    pass
+
+
+class JoinRequestNotFoundError(APIError):
+    pass
+
+
+class JoinRequestUserAlreadyParticipantError(APIError):
     pass
