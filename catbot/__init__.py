@@ -243,6 +243,8 @@ class Bot(User):
         except APIError as e:
             if 'message is not modified' in e.args[0]:
                 pass
+            elif 'message to edit not found' in e.args[0]:
+                raise MessageNotFoundError from e
             else:
                 raise
 
@@ -283,8 +285,8 @@ class Bot(User):
         try:
             chat = Chat(self.api('getChat', {'chat_id': chat_id}))
         except APIError as e:
-            if e.args[0] == 'Bad Request: chat not found':
-                raise ChatNotFoundError
+            if 'Bad Request: chat not found' in e.args[0]:
+                raise ChatNotFoundError from e
             else:
                 raise
         else:
@@ -304,7 +306,7 @@ class Bot(User):
             }), chat_id)
         except APIError as e:
             if 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError
+                raise UserNotFoundError from e
             else:
                 raise
         else:
@@ -363,13 +365,13 @@ class Bot(User):
             })
         except APIError as e:
             if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError
+                raise InsufficientRightError from e
             elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError
+                raise UserNotFoundError from e
             elif 'Bad Request: user is an administrator' in e.args[0] or \
                     'Bad Request: can\'t remove chat owner' in e.args[0] or \
                     'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError
+                raise RestrictAdminError from e
             else:
                 raise
         else:
@@ -444,13 +446,13 @@ class Bot(User):
                 result = self.api('kickChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until})
         except APIError as e:
             if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError
+                raise InsufficientRightError from e
             elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError
+                raise UserNotFoundError from e
             elif 'Bad Request: user is an administrator' in e.args[0] or \
                     'Bad Request: can\'t remove chat owner' in e.args[0] or \
                     'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError
+                raise RestrictAdminError from e
             else:
                 raise
         else:
@@ -466,13 +468,13 @@ class Bot(User):
             result = self.api('unbanChatMember', {'chat_id': chat_id, 'user_id': user_id, 'only_if_banned': True})
         except APIError as e:
             if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError
+                raise InsufficientRightError from e
             elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError
+                raise UserNotFoundError from e
             elif 'Bad Request: user is an administrator' in e.args[0] or \
                     'Bad Request: can\'t remove chat owner' in e.args[0] or \
                     'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError
+                raise RestrictAdminError from e
             else:
                 raise
         else:
@@ -485,7 +487,7 @@ class Bot(User):
             if 'Bad Request: message identifier is not specified' in e.args[0] or \
                     'Bad Request: message can\'t be deleted' in e.args[0] or \
                     'Bad Request: message to delete not found' in e.args[0]:
-                raise DeleteMessageError
+                raise DeleteMessageError from e
             else:
                 raise
         else:
@@ -524,7 +526,7 @@ class Bot(User):
             result = File(self.api('getFile', {'file_id': file_id}))
         except APIError as e:
             if 'invalid file_id' in e.args[0]:
-                raise InvalidFileIdError
+                raise InvalidFileIdError from e
         else:
             return result
 
@@ -1078,6 +1080,10 @@ class UserNotFoundError(APIError):
 
 
 class ChatNotFoundError(APIError):
+    pass
+
+
+class MessageNotFoundError(APIError):
     pass
 
 
