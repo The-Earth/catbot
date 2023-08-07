@@ -960,13 +960,13 @@ class ChatJoinRequestUpdate:
         self.from_ = User(update_json['from'])
         self.user_chat_id: int = update_json['user_chat_id']
         self.date: int = update_json['date']
-        try:
+        if 'bio' in update_json:
             self.bio: Optional[str] = update_json['bio']
-        except KeyError:
+        else:
             self.bio: Optional[str] = None
-        try:
+        if 'invite_link' in update_json:
             self.invite_link: Optional[ChatInviteLink] = ChatInviteLink(update_json['invite_link'])
-        except KeyError:
+        else:
             self.invite_link: Optional[ChatInviteLink] = None
 
     def __str__(self):
@@ -974,28 +974,28 @@ class ChatJoinRequestUpdate:
 
 
 class ChatInviteLink:
-    def __init__(self, update_json: dict):
-        self.raw = update_json
-        self.invite_link = update_json['invite_link']
-        self.creator = User(update_json['creator'])
-        self.creates_join_request: bool = update_json['creates_join_request']
-        self.is_primary: bool = update_json['is_primary']
-        self.is_revoked: bool = update_json['is_revoked']
-        try:
-            self.name: Optional[str] = update_json['name']
-        except KeyError:
+    def __init__(self, link_json: dict):
+        self.raw = link_json
+        self.invite_link = link_json['invite_link']
+        self.creator = User(link_json['creator'])
+        self.creates_join_request: bool = link_json['creates_join_request']
+        self.is_primary: bool = link_json['is_primary']
+        self.is_revoked: bool = link_json['is_revoked']
+        if 'name' in link_json:
+            self.name: Optional[str] = link_json['name']
+        else:
             self.name: Optional[int] = None
-        try:
-            self.expire_date: Optional[int] = update_json['expire_date']
-        except KeyError:
+        if 'expire_date' in link_json:
+            self.expire_date: Optional[int] = link_json['expire_date']
+        else:
             self.expire_date: Optional[int] = None
-        try:
-            self.member_limit: Optional[int] = update_json['member_limit']
-        except KeyError:
+        if 'member_limit' in link_json:
+            self.member_limit: Optional[int] = link_json['member_limit']
+        else:
             self.member_limit: Optional[int] = None
-        try:
-            self.pending_join_request_count: Optional[int] = update_json['pending_join_request_count']
-        except KeyError:
+        if 'pending_join_request_count' in link_json:
+            self.pending_join_request_count: Optional[int] = link_json['pending_join_request_count']
+        else:
             self.pending_join_request_count: Optional[int] = None
 
     def __str__(self):
