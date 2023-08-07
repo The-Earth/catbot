@@ -139,8 +139,8 @@ class Bot(User):
         self.my_member_status_tasks.append((criteria, action, action_kw))
 
     def add_chat_join_request_task(
-            self, criteria: Callable[["ChatJoinRequest"], bool],
-            action: Callable[["ChatJoinRequest"], None],
+            self, criteria: Callable[["ChatJoinRequestUpdate"], bool],
+            action: Callable[["ChatJoinRequestUpdate"], None],
             **action_kw):
         """
         Similar to add_msg_task, which add criteria and action for bot chat join request updates.
@@ -185,7 +185,7 @@ class Bot(User):
                             threading.Thread(target=action, args=(member_update,), kwargs=action_kw).start()
 
                 elif 'chat_join_request' in item:
-                    join_request_update = ChatJoinRequest(item['chat_join_request'])
+                    join_request_update = ChatJoinRequestUpdate(item['chat_join_request'])
                     for criteria, action, action_kw in self.chat_join_request_tasks:
                         if criteria(join_request_update):
                             threading.Thread(target=action, args=(join_request_update,), kwargs=action_kw).start()
@@ -953,7 +953,7 @@ class ChatMemberUpdate:
         return str(self.raw)
 
 
-class ChatJoinRequest:
+class ChatJoinRequestUpdate:
     def __init__(self, update_json: dict):
         self.raw = update_json
         self.chat = Chat(update_json['chat'])
@@ -963,11 +963,11 @@ class ChatJoinRequest:
         try:
             self.bio: Optional[str] = update_json['bio']
         except KeyError:
-            pass
+            self.bio: Optional[str] = None
         try:
             self.invite_link: Optional[ChatInviteLink] = ChatInviteLink(update_json['invite_link'])
         except KeyError:
-            pass
+            self.invite_link: Optional[ChatInviteLink] = None
 
     def __str__(self):
         return str(self.raw)
@@ -984,19 +984,19 @@ class ChatInviteLink:
         try:
             self.name: Optional[str] = update_json['name']
         except KeyError:
-            pass
+            self.name: Optional[int] = None
         try:
             self.expire_date: Optional[int] = update_json['expire_date']
         except KeyError:
-            pass
+            self.expire_date: Optional[int] = None
         try:
             self.member_limit: Optional[int] = update_json['member_limit']
         except KeyError:
-            pass
+            self.member_limit: Optional[int] = None
         try:
             self.pending_join_request_count: Optional[int] = update_json['pending_join_request_count']
         except KeyError:
-            pass
+            self.pending_join_request_count: Optional[int] = None
 
     def __str__(self):
         return str(self.raw)
