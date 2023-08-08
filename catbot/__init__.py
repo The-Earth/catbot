@@ -931,9 +931,9 @@ class InlineKeyboardButton:
         if len(kwargs) == 0:
             raise APIError('Inline keyboard button must have either url or callback_data.')
         if 'url' in kwargs:
-            self.url: Optional[str] = kwargs['url']
+            self.url: str = kwargs['url']
         else:
-            self.url = None
+            self.url = ''
         if 'callback_data' in kwargs:
             self.callback_data: str = kwargs['callback_data']
         else:
