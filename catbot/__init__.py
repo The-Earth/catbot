@@ -647,7 +647,8 @@ class ChatMember(User):
 
         if self.status == 'administrator' or self.status == 'creator':
             self.is_anonymous: bool = member_json['is_anonymous']
-            self.custom_title: Optional[str] = member_json['custom_title']
+            if 'custom_title' in member_json:
+                self.custom_title: Optional[str] = member_json['custom_title']
         if self.status == 'administrator':
             self.can_be_edited: bool = member_json['can_be_edited']
             self.can_delete_messages: bool = member_json['can_delete_messages']
