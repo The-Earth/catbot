@@ -119,6 +119,21 @@ class Bot(User):
         :return:
         """
         self.msg_tasks.append((criteria, action, action_kw))
+        logging.warning("Bot.add_msg_task() is deprecated. Please use @Bot.msg_task instead.")
+
+    def msg_task(self, criteria: Callable[["Message"], bool]):
+        """
+        Tag a function as action function for message updates.
+        :param criteria:
+            A function that leads flow of program into "action" function. It should take a Message-like object as the
+            only argument and returns a bool. When it returns True, "action" will be executed. An example is to return
+            True if the message starts with "/start", which is the standard starting of private chats with users.
+        :return:
+        """
+        def decorator(action: Callable[["Message"], None]) -> Callable[["Message"], None]:
+            self.msg_tasks.append((criteria, action, {}))
+            return action
+        return decorator
 
     def add_query_task(
             self,
@@ -132,6 +147,16 @@ class Bot(User):
         """
         self.query_tasks.append((criteria, action, action_kw))
 
+    def query_task(self, criteria: Callable[["CallbackQuery"], bool]):
+        """
+        Similar to msg_Task, which tag an action function for callback queries, typically clicks from
+        in-message buttons (I would like to call them in-message instead of inline, which is used by Telegram).
+        """
+        def decorator(action: Callable[["CallbackQuery"], None]) -> Callable[["CallbackQuery"], None]:
+            self.query_tasks.append((criteria, action, {}))
+            return action
+        return decorator
+
     def add_member_status_task(
             self,
             criteria: Callable[["ChatMemberUpdate"], bool],
@@ -143,23 +168,53 @@ class Bot(User):
         """
         self.member_status_tasks.append((criteria, action, action_kw))
 
+    def member_status_task(self, criteria: Callable[["ChatMemberUpdate"], bool]):
+        """
+        Similar to msg_task, which add criteria and action for chat member updates.
+        """
+        def decorator(action: Callable[["ChatMemberUpdate"], None]) -> Callable[["ChatMemberUpdate"], None]:
+            self.member_status_tasks.append((criteria, action, {}))
+            return action
+        return decorator
+
     def add_my_member_status_task(
-            self, criteria: Callable[["ChatMemberUpdate"], bool],
+            self,
+            criteria: Callable[["ChatMemberUpdate"], bool],
             action: Callable[["ChatMemberUpdate"], None],
-            **action_kw):
+            **action_kw
+    ):
         """
         Similar to add_msg_task, which add criteria and action for bot chat member updates.
         """
         self.my_member_status_tasks.append((criteria, action, action_kw))
 
+    def my_member_status_task(self, criteria: Callable[["ChatMemberUpdate"], bool]):
+        """
+        Similar to msg_task, which add criteria and action for bot chat member updates.
+        """
+        def decorator(action: Callable[["ChatMemberUpdate"], None]) -> Callable[["ChatMemberUpdate"], None]:
+            self.my_member_status_tasks.append((criteria, action, {}))
+            return action
+        return decorator
+
     def add_chat_join_request_task(
             self, criteria: Callable[["ChatJoinRequestUpdate"], bool],
             action: Callable[["ChatJoinRequestUpdate"], None],
-            **action_kw):
+            **action_kw
+    ):
         """
         Similar to add_msg_task, which add criteria and action for bot chat join request updates.
         """
         self.chat_join_request_tasks.append((criteria, action, action_kw))
+
+    def chat_join_request_task(self, criteria: Callable[["ChatJoinRequestUpdate"], bool]):
+        """
+        Similar to msg_task, which add criteria and action for bot chat join request updates.
+        """
+        def decorator(action: Callable[["ChatJoinRequestUpdate"], None]) -> Callable[["ChatJoinRequestUpdate"], None]:
+            self.chat_join_request_tasks.append((criteria, action, {}))
+            return action
+        return decorator
 
     def start(self):
         old_updates = self.get_updates(timeout=0)
