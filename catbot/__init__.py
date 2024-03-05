@@ -52,11 +52,20 @@ class Bot(User):
         self.can_read_all_group_messages: bool = get_me_resp['result']['can_read_all_group_messages']
         self.supports_inline_queries: bool = get_me_resp['result']['supports_inline_queries']
 
-        self.msg_tasks = []
-        self.query_tasks = []
-        self.member_status_tasks = []
-        self.my_member_status_tasks = []
-        self.chat_join_request_tasks = []
+        self.msg_tasks: list[tuple[Callable, Callable, dict]] = []
+        self.query_tasks: list[tuple[Callable, Callable, dict]] = []
+        self.member_status_tasks: list[tuple[Callable, Callable, dict]] = []
+        self.my_member_status_tasks: list[tuple[Callable, Callable, dict]] = []
+        self.chat_join_request_tasks: list[tuple[Callable, Callable, dict]] = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.config_path:
+            json.dump(self.config, open(self.config_path, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
+        if self.record:
+            json.dump(self.record, open(self.config['record'], 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
 
     def api(self, action: str, data: dict):
         resp = requests.post(self.base_url + action, json=data, **self.proxy_kw).json()
