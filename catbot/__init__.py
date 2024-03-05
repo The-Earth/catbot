@@ -36,6 +36,10 @@ class Bot(User):
             self.config_path = config_path
         self.token: str = self.config['token']
         self.base_url = 'https://api.telegram.org/bot' + self.token + '/'
+        if 'record' in self.config:
+            self.record = json.load(open(self.config['record'], 'r', encoding='utf-8'))
+        else:
+            self.record = None
 
         if 'proxy' in self.config and self.config['proxy']['enable']:
             self.proxy_kw = {'proxies': {'https': self.config['proxy']['proxy_url']}}
