@@ -27,8 +27,13 @@ class User:
 
 
 class Bot(User):
-    def __init__(self, config: dict):
-        self.config = config
+    def __init__(self, config: dict = None, config_path: str = None):
+        if config_path is None:
+            self.config = config
+            self.config_path = ''
+        else:
+            self.config = json.load(open(config_path, 'r', encoding='utf-8'))
+            self.config_path = config_path
         self.token: str = self.config['token']
         self.base_url = 'https://api.telegram.org/bot' + self.token + '/'
 
