@@ -1,8 +1,8 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name='catbot',
-    version='0.11.2',
+    version='1.0.0',
     packages=['catbot'],
     url='https://github.com/The-Earth/catbot',
     license='MIT License',

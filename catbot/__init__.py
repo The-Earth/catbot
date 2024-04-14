@@ -37,24 +37,24 @@ class Bot(User):
         self.token: str = self.config['token']
         self.base_url = 'https://api.telegram.org/bot' + self.token + '/'
         if 'record' in self.config:
-            self.record = json.load(open(self.config['record'], 'r', encoding='utf-8'))
+            try:
+                self.record = json.load(open(self.config['record'], 'r', encoding='utf-8'))
+            except FileNotFoundError:
+                self.record = {}
         else:
             self.record = None
 
         if 'proxy' in self.config and self.config['proxy']['enable']:
-            self.proxy_kw = {'proxies': {'https': self.config['proxy']['proxy_url']}}
+            self.proxies = {'https': self.config['proxy']['proxy_url']}
         else:
-            self.proxy_kw = {}
-        get_me_resp: dict = requests.get(self.base_url + 'getMe', **self.proxy_kw).json()
+            self.proxies = {}
+        get_me_resp = self.api('getMe', data={})
 
-        if not get_me_resp['ok']:
-            raise APIError('Bot initialization failed.' + get_me_resp['description'])
+        super().__init__(get_me_resp)
 
-        super().__init__(get_me_resp['result'])
-
-        self.can_join_groups: bool = get_me_resp['result']['can_join_groups']
-        self.can_read_all_group_messages: bool = get_me_resp['result']['can_read_all_group_messages']
-        self.supports_inline_queries: bool = get_me_resp['result']['supports_inline_queries']
+        self.can_join_groups: bool = get_me_resp['can_join_groups']
+        self.can_read_all_group_messages: bool = get_me_resp['can_read_all_group_messages']
+        self.supports_inline_queries: bool = get_me_resp['supports_inline_queries']
 
         self.msg_tasks: list[tuple[Callable, Callable, dict]] = []
         self.query_tasks: list[tuple[Callable, Callable, dict]] = []
@@ -71,8 +71,8 @@ class Bot(User):
         if self.record:
             json.dump(self.record, open(self.config['record'], 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
 
-    def api(self, action: str, data: dict):
-        resp = requests.post(self.base_url + action, json=data, **self.proxy_kw).json()
+    def api(self, action: str, data: dict, timeout=60):
+        resp = requests.post(self.base_url + action, json=data, timeout=timeout, proxies=self.proxies).json()
         if not resp['ok']:
             raise APIError(f'API request "{action}" failed. {resp["description"]}')
 
@@ -98,7 +98,7 @@ class Bot(User):
                            'chat_member',  # Available
                            'chat_join_request'  # Available
                        ]}
-        updates = self.api('getUpdates', update_data)
+        updates = self.api('getUpdates', update_data, timeout=timeout + 10)
         logging.debug(updates)
         return updates
 
@@ -111,7 +111,7 @@ class Bot(User):
         """
         Add tasks for the bot to process. For message updates only. Use add_query_task for callback query updates.
         :param criteria:
-            A function that lead flow of program into "action" function. It should take a Message-like object as the
+            A function that leads flow of program into "action" function. It should take a Message-like object as the
             only argument and returns a bool. When it returns True, "action" will be executed. An example is to return
             True if the message starts with "/start", which is the standard starting of private chats with users.
         :param action:
@@ -221,11 +221,11 @@ class Bot(User):
         return decorator
 
     def start(self):
-        old_updates = self.get_updates(timeout=0)
+        old_updates = self.get_updates(offset=0, timeout=0)
         update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
         while True:
             try:
-                updates = self.get_updates(update_offset)
+                updates = self.get_updates(offset=update_offset)
             except (APIError, requests.ConnectionError) as e:
                 logging.warning(e.args[0])
                 continue
@@ -291,7 +291,7 @@ class Bot(User):
             kw['reply_markup'] = kw['reply_markup'].parse()
 
         if len(text) > 4000 and 'parse_mode' not in kw:
-            text_part = [text[i * 4000 : (i + 1) * 4000] for i in range(len(text) // 4000 + 1)]
+            text_part = [text[i * 4000: (i + 1) * 4000] for i in range(len(text) // 4000 + 1)]
             sent_msg = None
             for i in range(len(text_part)):
                 msg_payload = {
