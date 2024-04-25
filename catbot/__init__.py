@@ -66,6 +66,9 @@ class Bot(User):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.save_config_and_record()
+
+    def save_config_and_record(self):
         if self.config_path:
             json.dump(self.config, open(self.config_path, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
         if self.record:
@@ -264,6 +267,8 @@ class Bot(User):
                             threading.Thread(target=action, args=(join_request_update,), kwargs=action_kw).start()
                 else:
                     continue
+
+        self.save_config_and_record()
 
     def send_message(self, chat_id, text: str, **kw) -> "Message":
         """
