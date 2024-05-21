@@ -223,10 +223,10 @@ class Bot(User):
             return action
         return decorator
 
-    def start(self):
+    def start(self, stop_event=None):
         old_updates = self.get_updates(offset=0, timeout=0)
         update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
-        while True:
+        while stop_event is None or not stop_event.is_set():
             try:
                 updates = self.get_updates(offset=update_offset)
             except (APIError, requests.RequestException) as e:
