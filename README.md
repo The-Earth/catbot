@@ -20,10 +20,8 @@ Let's say your config file is `config.json`, then create a bot instance:
 
 ```python
 import catbot
-import json
 
-config = json.load(open('config.json', 'r', encoding='utf-8'))
-bot = catbot.Bot(config)
+bot = catbot.Bot(config_path='config.json')
 ```
 
 Let's start with auto-replying the `/start` command in private chat with users, which is the very beginning of interactions with users.
@@ -38,21 +36,21 @@ def start_cri(msg: catbot.Message) -> bool:
 This function checks whether the message is from a private chat and its content is exactly `/start`. Then we need an action function.
 
 ```python
+@bot.msg_task(start_cri)
 def start(msg: catbot.Message):
     bot.send_message(chat_id=msg.chat.id, text='Hello')
 ```
 
-This function send a `Hello` to the chat it received a `/start` from. Finally, add both two functions to task list. Notice that this task responds to [Message](https://core.telegram.org/bots/api#message) objects (also, `Message` class in catbot). So we use `add_msg_task` method here. (For other types of incoming events, catbot supports [CallbackQuery](https://core.telegram.org/bots/api#callbackquery) and [ChatMemberUpdated](https://core.telegram.org/bots/api#chatmemberupdated), with `add_query_task` and `add_member_status_task`.)
-
-```python
-bot.add_msg_task(start_cri, start)
-```
+This function send a `Hello` to the chat it received a `/start` from. The `msg_task` from `bot` adds both two functions to the task list of the bot. Notice that this task responds to [Message](https://core.telegram.org/bots/api#message) objects (also, `Message` class in catbot). So we use `msg_task` decorator here. (For other types of incoming events, catbot supports [CallbackQuery](https://core.telegram.org/bots/api#callbackquery) and [ChatMemberUpdated](https://core.telegram.org/bots/api#chatmemberupdated), with `query_task` and `member_status_task`, respectively.)
 
 And start the bot:
 
 ```python
-bot.start()
+with bot:
+    bot.start()
 ```
+
+catbot contains context management to save changed configurations and data on exit.
 
 ## Go further
 

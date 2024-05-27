@@ -20,10 +20,8 @@ pip install catbot-x.tar.gz
 
 ```python
 import catbot
-import json
 
-config = json.load(open('config.json', 'r', encoding='utf-8'))
-bot = catbot.Bot(config)
+bot = catbot.Bot(config_path='config.json')
 ```
 
 以下例子将创建一个自动回应私聊的 `/start` 指令的机器人。私聊中的 `/start` 是用户开始使用机器人的时候都会发送的指令。
@@ -38,21 +36,21 @@ def start_cri(msg: catbot.Message) -> bool:
 这个函数会检查消息是否来自私聊，且内容为刚好是 `/start`。然后建立一个动作函数：
 
 ```python
+@bot.msg_task(start_cri)
 def start(msg: catbot.Message):
     bot.send_message(chat_id=msg.chat.id, text='Hello')
 ```
 
-这个函数会向收到 `/start` 的那个聊天中发送 `Hello`。最后，将这两个函数加入任务列表。需要注意的是，这个任务需要响应 Telegram 的 [Message](https://core.telegram.org/bots/api#message) 对象（也就是 catbot 中的 `Message` 类）。所以我们使用 `add_msg_task` 方法。（对于其他类型的事件， catbot 目前支持 [CallbackQuery](https://core.telegram.org/bots/api#callbackquery) 和 [ChatMemberUpdated](https://core.telegram.org/bots/api#chatmemberupdated) ，对应 `add_query_tast` 和 `add_member_status_task`。）
-
-```python
-bot.add_msg_task(start_cri, start)
-```
+这个函数会向收到 `/start` 的那个聊天中发送 `Hello`。`msg_task` 装饰器将这两个函数加入机器人的任务列表。需要注意的是，这个任务需要响应 Telegram 的 [Message](https://core.telegram.org/bots/api#message) 对象（也就是 catbot 中的 `Message` 类）。所以我们使用 `msg_task` 装饰器。（对于其他类型的事件， catbot 目前支持 [CallbackQuery](https://core.telegram.org/bots/api#callbackquery) 和 [ChatMemberUpdated](https://core.telegram.org/bots/api#chatmemberupdated) ，对应 `query_tast` 和 `member_status_task`。）
 
 最后启动机器人：
 
 ```python
-bot.start()
+with bot:
+    bot.start()
 ```
+
+catbot 使用上下文管理器，以便在退出的时候保存修改过的配置和数据。
 
 ## 更多
 
