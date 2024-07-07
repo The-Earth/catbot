@@ -137,9 +137,11 @@ class Bot(User):
             True if the message starts with "/start", which is the standard starting of private chats with users.
         :return:
         """
+
         def decorator(action: Callable[["Message"], None]) -> Callable[["Message"], None]:
             self.msg_tasks.append((criteria, action, {}))
             return action
+
         return decorator
 
     def add_query_task(
@@ -159,9 +161,11 @@ class Bot(User):
         Similar to msg_Task, which tag an action function for callback queries, typically clicks from
         in-message buttons (I would like to call them in-message instead of inline, which is used by Telegram).
         """
+
         def decorator(action: Callable[["CallbackQuery"], None]) -> Callable[["CallbackQuery"], None]:
             self.query_tasks.append((criteria, action, {}))
             return action
+
         return decorator
 
     def add_member_status_task(
@@ -179,9 +183,11 @@ class Bot(User):
         """
         Similar to msg_task, which add criteria and action for chat member updates.
         """
+
         def decorator(action: Callable[["ChatMemberUpdate"], None]) -> Callable[["ChatMemberUpdate"], None]:
             self.member_status_tasks.append((criteria, action, {}))
             return action
+
         return decorator
 
     def add_my_member_status_task(
@@ -199,9 +205,11 @@ class Bot(User):
         """
         Similar to msg_task, which add criteria and action for bot chat member updates.
         """
+
         def decorator(action: Callable[["ChatMemberUpdate"], None]) -> Callable[["ChatMemberUpdate"], None]:
             self.my_member_status_tasks.append((criteria, action, {}))
             return action
+
         return decorator
 
     def add_chat_join_request_task(
@@ -218,22 +226,26 @@ class Bot(User):
         """
         Similar to msg_task, which add criteria and action for bot chat join request updates.
         """
+
         def decorator(action: Callable[["ChatJoinRequestUpdate"], None]) -> Callable[["ChatJoinRequestUpdate"], None]:
             self.chat_join_request_tasks.append((criteria, action, {}))
             return action
+
         return decorator
 
-    def start(self, stop_event=None):
+    def start(self, stop_event=None, print_log=False, timeout=60):
         old_updates = self.get_updates(offset=0, timeout=0)
         update_offset = old_updates[-1]['update_id'] + 1 if old_updates else 0
         while stop_event is None or not stop_event.is_set():
             try:
-                updates = self.get_updates(offset=update_offset)
+                updates = self.get_updates(offset=update_offset, timeout=timeout)
             except (APIError, requests.RequestException) as e:
                 logging.warning(e.args[0])
                 continue
 
             for item in updates:
+                if print_log:
+                    print(item)
                 update_offset = item['update_id'] + 1
                 if 'message' in item:
                     msg = Message(item['message'])
