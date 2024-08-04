@@ -375,10 +375,7 @@ class Bot(User):
         try:
             chat = Chat(self.api('getChat', {'chat_id': chat_id}))
         except APIError as e:
-            if 'Bad Request: chat not found' in e.args[0]:
-                raise ChatNotFoundError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return chat
 
@@ -395,10 +392,7 @@ class Bot(User):
                 'user_id': user_id
             }), chat_id)
         except APIError as e:
-            if 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return chat_member
 
@@ -454,16 +448,7 @@ class Bot(User):
                 'permissions': permissions
             })
         except APIError as e:
-            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError from e
-            elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError from e
-            elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
-                    'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return result
 
@@ -535,16 +520,7 @@ class Bot(User):
             else:
                 result = self.api('kickChatMember', {'chat_id': chat_id, 'user_id': user_id, 'until_date': until})
         except APIError as e:
-            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError from e
-            elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError from e
-            elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
-                    'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return result
 
@@ -557,16 +533,7 @@ class Bot(User):
         try:
             result = self.api('unbanChatMember', {'chat_id': chat_id, 'user_id': user_id, 'only_if_banned': True})
         except APIError as e:
-            if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
-                raise InsufficientRightError from e
-            elif 'Bad Request: user not found' in e.args[0]:
-                raise UserNotFoundError from e
-            elif 'Bad Request: user is an administrator' in e.args[0] or \
-                    'Bad Request: can\'t remove chat owner' in e.args[0] or \
-                    'Bad Request: not enough rights' in e.args[0]:
-                raise RestrictAdminError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return result
 
@@ -574,12 +541,7 @@ class Bot(User):
         try:
             result = self.api('deleteMessage', {'chat_id': chat_id, 'message_id': msg_id})
         except APIError as e:
-            if 'Bad Request: message identifier is not specified' in e.args[0] or \
-                    'Bad Request: message can\'t be deleted' in e.args[0] or \
-                    'Bad Request: message to delete not found' in e.args[0]:
-                raise DeleteMessageError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return result
 
@@ -587,13 +549,7 @@ class Bot(User):
         try:
             result = self.api('approveChatJoinRequest', {'chat_id': chat_id, 'user_id': user_id})
         except APIError as e:
-            if 'Bad Request: USER_ALREADY_PARTICIPANT' in e.args[0]:
-                raise JoinRequestUserAlreadyParticipantError from e
-            elif 'Bad Request: USER_ID_INVALID' in e.args[0] or \
-                    'Bad Request: HIDE_REQUESTER_MISSING' in e.args[0]:
-                raise JoinRequestNotFoundError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return result
 
@@ -601,13 +557,7 @@ class Bot(User):
         try:
             result = self.api('declineChatJoinRequest', {'chat_id': chat_id, 'user_id': user_id})
         except APIError as e:
-            if 'Bad Request: USER_ALREADY_PARTICIPANT' in e.args[0]:
-                raise JoinRequestUserAlreadyParticipantError from e
-            elif 'Bad Request: USER_ID_INVALID' in e.args[0] or \
-                    'Bad Request: HIDE_REQUESTER_MISSING' in e.args[0]:
-                raise JoinRequestNotFoundError from e
-            else:
-                raise
+            raise api_error_transformer(e) from e
         else:
             return result
 
@@ -1283,3 +1233,27 @@ class JoinRequestNotFoundError(APIError):
 
 class JoinRequestUserAlreadyParticipantError(APIError):
     pass
+
+
+def api_error_transformer(e: APIError) -> APIError:
+    if 'Bad Request: not enough rights to restrict/unrestrict chat member' in e.args[0]:
+        return InsufficientRightError(e.args[0])
+    elif 'Bad Request: user not found' in e.args[0]:
+        return UserNotFoundError(e.args[0])
+    elif 'Bad Request: user is an administrator' in e.args[0] or \
+            'Bad Request: can\'t remove chat owner' in e.args[0] or \
+            'Bad Request: not enough rights' in e.args[0]:
+        return RestrictAdminError(e.args[0])
+    elif 'Bad Request: message identifier is not specified' in e.args[0] or \
+            'Bad Request: message can\'t be deleted' in e.args[0] or \
+            'Bad Request: message to delete not found' in e.args[0]:
+        return DeleteMessageError(e.args[0])
+    elif 'Bad Request: USER_ALREADY_PARTICIPANT' in e.args[0]:
+        return JoinRequestUserAlreadyParticipantError(e.args[0])
+    elif 'Bad Request: USER_ID_INVALID' in e.args[0] or \
+            'Bad Request: HIDE_REQUESTER_MISSING' in e.args[0]:
+        return JoinRequestNotFoundError(e.args[0])
+    elif 'Bad Request: chat not found' in e.args[0]:
+        return ChatNotFoundError(e.args[0])
+    else:
+        return e
