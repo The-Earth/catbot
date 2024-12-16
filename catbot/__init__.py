@@ -6,8 +6,6 @@ from typing import Callable, Any, Optional
 
 import requests
 
-logging.basicConfig(filename='catbot.log', encoding='utf-8', level=logging.DEBUG)
-
 
 class User:
     def __init__(self, user_json: dict):
@@ -1160,6 +1158,10 @@ class Chat:
             self.linked_chat_id: Optional[int] = chat_json['linked_chat_id']
         else:
             self.linked_chat_id: Optional[int] = None
+        if 'invite_link' in chat_json:
+            self.invite_link: Optional[str] = chat_json['invite_link']
+        else:
+            self.invite_link: Optional[str] = None
 
     def __str__(self):
         return str(self.raw)
