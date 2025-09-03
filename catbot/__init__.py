@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 import logging
 import threading
@@ -292,7 +293,8 @@ class Bot(User):
                                             in this message.<br>
                 - disable_notification: Optional. Should be True or False. Sends the message silently. Users will
                                         receive a notification with no sound.<br>
-                - reply_to_message_id: Optional. If the message is a reply, ID of the original message.<br>
+                - reply_to_message_id: Deprecated. Optional. If the message is a reply, ID of the original message.<br>
+                - reply_parameters: Optional, Object of ReplyParameters. Description of the message to reply to
                 - allow_sending_without_reply: Optional. Pass True, if the message should be sent even if the specified
                                                replied-to message is not found<br>
             For plain text messages:<br>
@@ -304,6 +306,8 @@ class Bot(User):
         """
         if 'reply_markup' in kw:
             kw['reply_markup'] = kw['reply_markup'].parse()
+        if 'reply_parameters' in kw:
+            kw['reply_parameters'] = kw['reply_parameters'].to_dict()
 
         if len(text) > 4000 and 'parse_mode' not in kw:
             text_part = [text[i * 4000: (i + 1) * 4000] for i in range(len(text) // 4000 + 1)]
@@ -321,7 +325,7 @@ class Bot(User):
             sent_msg = Message(self.api('sendMessage', msg_payload))
         return sent_msg
 
-    def edit_message(self, chat_id, msg_id, **kw) -> "Message":
+    def edit_message(self, chat_id, msg_id, **kw) -> "Message | None":
         if 'reply_markup' in kw:
             kw['reply_markup'] = kw['reply_markup'].parse()
 
@@ -559,7 +563,7 @@ class Bot(User):
         else:
             return result
 
-    def get_file(self, file_id: str) -> "File":
+    def get_file(self, file_id: str) -> "File | None":
         try:
             result = File(self.api('getFile', {'file_id': file_id}))
         except APIError as e:
@@ -586,6 +590,7 @@ class Bot(User):
         if path:
             with open(path, 'wb') as f:
                 f.write(content)
+                return None
         else:
             return content
 
@@ -1191,6 +1196,48 @@ class PhotoSize:
             self.file_size: int = photo_json['file_size']
         else:
             self.file_size = -1
+
+
+@dataclass(kw_only=True)
+class ReplyParameters:
+    """
+    Describes reply parameters for the message that is being sent.
+    https://core.telegram.org/bots/api#replyparameters
+
+    :param message_id Identifier of the message that will be replied to in the current chat, or in the chat
+        chat_id if it is specified
+    :param chat_id or String Optional. If the message to be replied to is from a different chat, unique
+        identifier for the chat or username of the channel (in the format @channelusername). Not supported for
+        messages sent on behalf of a business account and messages from channel direct messages chats.
+    :param allow_sending_without_reply Optional. Pass True if the message should be sent even if the specified
+        message to be replied to is not found. Always False for replies in another chat or forum topic. Always True
+        for messages sent on behalf of a business account.
+    :param quote Optional. Quoted part of the message to be replied to; 0-1024 characters after entities parsing.
+        The quote must be an exact substring of the message to be replied to, including bold, italic, underline,
+        strikethrough, spoiler, and custom_emoji entities. The message will fail to send if the quote isn't found
+         in the original message.
+    :param quote_parse_mode Optional. Mode for parsing entities in the quote. See formatting options for more details.
+    :param quote_entities of MessageEntity Optional. A JSON-serialized list of special entities that appear in
+        the quote. It can be specified instead of quote_parse_mode.
+    :param quote_position Optional. Position of the quote in the original message in UTF-16 code units
+    :param checklist_task_id Optional. Identifier of the specific checklist task to be replied to
+    """
+    message_id: int
+    chat_id: int | None = None
+    allow_sending_without_reply: bool | None = None
+    quote: str | None = None
+    quote_parse_mode: str | None = None
+    quote_entities: list[dict] | None = None
+    quote_position: int | None = None
+    checklist_task_id: int | None = None
+
+
+    def to_dict(self) -> dict[str, Any]:
+        result = {}
+        for key in self.__dict__:
+            if self.__dict__[key] is not None:
+                result[key] = self.__dict__[key]
+        return result
 
 
 class APIError(Exception):
