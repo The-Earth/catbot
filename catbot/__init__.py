@@ -739,7 +739,7 @@ class ChatMember(User):
         if self.status == 'administrator' or self.status == 'restricted':
             self.can_change_info: bool = member_json['can_change_info']
             self.can_invite_users: bool = member_json['can_invite_users']
-        if self.status == 'member':
+        if self.status == 'member' or self.status == 'restricted':
             if 'tag' in member_json:
                 self.tag = member_json['tag']
 
