@@ -612,6 +612,20 @@ class Bot(User):
         else:
             return content
 
+    def set_chat_member_tag(self, chat_id: str | int, user_id: int, tag: str) -> bool:
+        """
+        Set a tag for a regular member in a group or a supergroup. See https://core.telegram.org/bots/api#setchatmembertag
+        :param chat_id Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
+        :param user_id: Unique identifier of the target user
+        :param tag: New tag for the member; 0-16 characters, emoji are not allowed
+        :return: Return True on success
+        """
+        try:
+            result = self.api('setChatMemberTag', {'chat_id': chat_id, 'user_id': user_id, 'tag': tag})
+        except APIError as e:
+            raise api_error_transformer(e) from e
+        return result
+
     """
     Methods below are bot-related utility methods which are not abstractions of Telegram apis.
     """
