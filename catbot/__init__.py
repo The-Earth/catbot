@@ -540,6 +540,12 @@ class Bot(User):
             return result
 
     def delete_message(self, chat_id, msg_id) -> bool:
+        """
+        Delete a message. See https://core.telegram.org/bots/api#deletemessage
+        :param chat_id: Unique identifier for the target chat or username of the target channel (in the format @channelusername)
+        :param msg_id: Identifier of the message to delete
+        :return:
+        """
         try:
             result = self.api('deleteMessage', {'chat_id': chat_id, 'message_id': msg_id})
         except APIError as e:
@@ -548,6 +554,12 @@ class Bot(User):
             return result
 
     def approve_chat_join_request(self, chat_id, user_id) -> bool:
+        """
+        Approve a chat join request. See https://core.telegram.org/bots/api#approvechatjoinrequest
+        :param chat_id: Unique identifier for the target chat or username of the target channel (in the format @channelusername)
+        :param user_id: Unique identifier of the target user
+        :return:
+        """
         try:
             result = self.api('approveChatJoinRequest', {'chat_id': chat_id, 'user_id': user_id})
         except APIError as e:
@@ -556,6 +568,12 @@ class Bot(User):
             return result
 
     def decline_chat_join_request(self, chat_id, user_id) -> bool:
+        """
+        Decline a chat join request. See https://core.telegram.org/bots/api#declinechatjoinrequest
+        :param chat_id: Unique identifier for the target chat or username of the target channel (in the format @channelusername)
+        :param user_id: Unique identifier of the target user
+        :return:
+        """
         try:
             result = self.api('declineChatJoinRequest', {'chat_id': chat_id, 'user_id': user_id})
         except APIError as e:
