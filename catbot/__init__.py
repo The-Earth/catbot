@@ -719,6 +719,7 @@ class ChatMember(User):
         self.can_change_info = False
         self.can_invite_users = False
         self.custom_title: Optional[str] = None
+        self.tag: Optional[str] = None
 
         if self.status == 'administrator' or self.status == 'creator':
             self.is_anonymous: bool = member_json['is_anonymous']
@@ -738,6 +739,9 @@ class ChatMember(User):
         if self.status == 'administrator' or self.status == 'restricted':
             self.can_change_info: bool = member_json['can_change_info']
             self.can_invite_users: bool = member_json['can_invite_users']
+        if self.status == 'member':
+            if 'tag' in member_json:
+                self.tag = member_json['tag']
 
         # Restricted actions are allowed for non-restricted users
         self.until_date: Optional[int] = None
