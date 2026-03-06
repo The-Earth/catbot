@@ -3,7 +3,7 @@ name = "catbot"
 version = "1.2.0"
 description = "A Telegram bot API framework"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
     "requests>=2.32.5",
 ]
